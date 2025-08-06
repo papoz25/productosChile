@@ -243,7 +243,7 @@
             margin-top: 20px;
         }
         
-        .add-row-btn, .export-btn, .save-btn, .load-btn, .debug-btn {
+        .add-row-btn, .export-btn, .save-btn, .load-btn {
             background-color: #4caf50;
             color: white;
             padding: 10px 20px;
@@ -267,10 +267,6 @@
             background-color: #9c27b0;
         }
         
-        .debug-btn {
-            background-color: #607d8b;
-        }
-        
         .add-row-btn:hover {
             background-color: #45a049;
         }
@@ -285,10 +281,6 @@
         
         .load-btn:hover {
             background-color: #7b1fa2;
-        }
-        
-        .debug-btn:hover {
-            background-color: #546e7a;
         }
         
         .delete-btn {
@@ -334,18 +326,6 @@
         .hidden {
             display: none;
         }
-
-        .debug-info {
-            background-color: #f8f9fa;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 4px;
-            border: 1px solid #dee2e6;
-            font-family: monospace;
-            font-size: 12px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
     </style>
 </head>
 <body>
@@ -353,10 +333,9 @@
         <h1>📊 Hoja de Cálculo con Conversión de Monedas</h1>
         
         <div id="statusMessage" class="hidden"></div>
-        <div id="debugInfo" class="debug-info hidden"></div>
         
         <div class="exchange-rates">
-            <h3>💱 Tipos de Cambio</h3>
+            <h3>💱 Tipos de Cambio (31/07/2025)</h3>
             <div class="rates-grid">
                 <div class="rate-item">
                     <span>1 USD =</span>
@@ -394,7 +373,6 @@
             <button class="add-row-btn" onclick="addRow()">➕ Agregar Fila</button>
             <button class="save-btn" onclick="saveAllData()">💾 Guardar Todo</button>
             <button class="load-btn" onclick="loadAllData()">📂 Cargar Datos</button>
-            <button class="debug-btn" onclick="debugAPI()">🔍 Debug API</button>
             <button class="export-btn" onclick="exportToCSV()">📥 Exportar CSV</button>
         </div>
     </div>
@@ -402,52 +380,7 @@
     <script>
         let isUpdating = false;
         let productos = [];
-        const API_BASE_URL = window.location.origin + '/api'; // URL dinámica basada en el origen
-
-        // Función para logs de debug
-        function debugLog(message, data = null) {
-            const timestamp = new Date().toLocaleTimeString();
-            const logMessage = `[${timestamp}] ${message}`;
-            console.log(logMessage, data);
-            
-            // Mostrar en la interfaz también
-            const debugDiv = document.getElementById('debugInfo');
-            debugDiv.classList.remove('hidden');
-            debugDiv.innerHTML += `<div>${logMessage}${data ? ': ' + JSON.stringify(data, null, 2) : ''}</div>`;
-            debugDiv.scrollTop = debugDiv.scrollHeight;
-        }
-
-        // Función para testear la API
-        async function debugAPI() {
-            debugLog('🔍 Iniciando debug de API...');
-            debugLog('API_BASE_URL', API_BASE_URL);
-            
-            try {
-                // Test 1: Health check
-                debugLog('📡 Testeando /health...');
-                const healthResponse = await fetch(`${API_BASE_URL.replace('/api', '')}/health`);
-                const healthData = await healthResponse.json();
-                debugLog('Health check response', healthData);
-                
-                // Test 2: API productos
-                debugLog('📡 Testeando /api/productos...');
-                const apiResponse = await fetch(`${API_BASE_URL}/productos`);
-                debugLog('API Response status', apiResponse.status);
-                debugLog('API Response headers', Object.fromEntries(apiResponse.headers.entries()));
-                
-                if (apiResponse.ok) {
-                    const productos = await apiResponse.json();
-                    debugLog('Productos recibidos', productos);
-                    debugLog('Cantidad de productos', productos.length);
-                } else {
-                    const errorText = await apiResponse.text();
-                    debugLog('❌ Error en API', { status: apiResponse.status, error: errorText });
-                }
-                
-            } catch (error) {
-                debugLog('❌ Error en debug', error.message);
-            }
-        }
+        const API_BASE_URL = '/api'; // Cambia esto si tu backend está en otro puerto
 
         // Funciones de utilidad para mostrar mensajes
         function showMessage(message, type = 'info') {
@@ -456,11 +389,9 @@
             statusEl.className = `status-message status-${type}`;
             statusEl.classList.remove('hidden');
             
-            debugLog(`📢 Mensaje: ${message} (${type})`);
-            
             setTimeout(() => {
                 statusEl.classList.add('hidden');
-            }, 5000);
+            }, 3000);
         }
 
         function getRates() {
@@ -519,8 +450,6 @@
             const tableBody = document.getElementById('tableBody');
             const newRow = document.createElement('tr');
             
-            debugLog('🆕 Creando nueva fila', producto);
-            
             newRow.innerHTML = `
                 <td><input type="text" placeholder="Nombre del producto" value="${producto.nombre || ''}"></td>
                 <td>
@@ -551,7 +480,6 @@
             // Agregar data-id si el producto tiene ID (viene de la base de datos)
             if (producto.id) {
                 newRow.setAttribute('data-id', producto.id);
-                debugLog('📋 Fila creada con ID', producto.id);
             }
             
             tableBody.appendChild(newRow);
@@ -581,8 +509,6 @@
 
         async function deleteProductFromDB(productId, row) {
             try {
-                debugLog('🗑️ Eliminando producto de BD', productId);
-                
                 const response = await fetch(`${API_BASE_URL}/productos/${productId}`, {
                     method: 'DELETE'
                 });
@@ -590,13 +516,11 @@
                 if (response.ok) {
                     row.remove();
                     showMessage('Producto eliminado exitosamente', 'success');
-                    debugLog('✅ Producto eliminado exitosamente');
                 } else {
                     throw new Error('Error al eliminar producto');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                debugLog('❌ Error al eliminar producto', error.message);
                 showMessage('Error al eliminar producto', 'error');
             }
         }
@@ -628,7 +552,6 @@
             let savedCount = 0;
             let errorCount = 0;
             
-            debugLog('💾 Iniciando guardado de todos los datos...');
             showMessage('Guardando productos...', 'info');
             
             for (let row of rows) {
@@ -639,8 +562,6 @@
                     try {
                         const productId = row.getAttribute('data-id');
                         let response;
-                        
-                        debugLog('💾 Guardando producto', { productId, rowData });
                         
                         if (productId) {
                             // Actualizar producto existente
@@ -664,20 +585,16 @@
                         
                         if (response.ok) {
                             const savedProduct = await response.json();
-                            debugLog('✅ Producto guardado', savedProduct);
                             // Agregar ID a la fila si es un nuevo producto
                             if (!productId) {
                                 row.setAttribute('data-id', savedProduct.id);
                             }
                             savedCount++;
                         } else {
-                            const errorText = await response.text();
-                            debugLog('❌ Error al guardar producto', { status: response.status, error: errorText });
                             throw new Error('Error al guardar');
                         }
                     } catch (error) {
                         console.error('Error al guardar producto:', error);
-                        debugLog('❌ Error al guardar producto', error.message);
                         errorCount++;
                     }
                 }
@@ -685,33 +602,21 @@
             
             if (errorCount === 0) {
                 showMessage(`${savedCount} productos guardados exitosamente`, 'success');
-                debugLog(`✅ Guardado completado: ${savedCount} productos`);
             } else {
                 showMessage(`${savedCount} productos guardados, ${errorCount} errores`, 'error');
-                debugLog(`⚠️ Guardado completado con errores: ${savedCount} exitosos, ${errorCount} errores`);
             }
         }
 
         async function loadAllData() {
             try {
-                debugLog('📂 Iniciando carga de datos...');
                 showMessage('Cargando productos...', 'info');
                 
                 const response = await fetch(`${API_BASE_URL}/productos`);
-                debugLog('📡 Respuesta de carga recibida', {
-                    status: response.status,
-                    ok: response.ok,
-                    url: response.url
-                });
-                
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    debugLog('❌ Error en respuesta de carga', { status: response.status, error: errorText });
-                    throw new Error(`Error ${response.status}: ${errorText}`);
+                    throw new Error('Error al cargar productos');
                 }
                 
                 const productos = await response.json();
-                debugLog('📊 Productos recibidos', productos);
                 
                 // Limpiar tabla actual
                 const tableBody = document.getElementById('tableBody');
@@ -719,27 +624,20 @@
                 
                 // Cargar productos desde la base de datos
                 if (productos.length > 0) {
-                    productos.forEach((producto, index) => {
-                        debugLog(`📋 Creando fila ${index + 1}`, producto);
+                    productos.forEach(producto => {
                         createNewRow(producto);
                     });
                     showMessage(`${productos.length} productos cargados exitosamente`, 'success');
-                    debugLog(`✅ Carga completada: ${productos.length} productos`);
                 } else {
                     // Si no hay productos, crear una fila vacía
                     createNewRow();
                     showMessage('No hay productos guardados. Se creó una fila nueva.', 'info');
-                    debugLog('ℹ️ No hay productos, creando fila vacía');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                debugLog('❌ Error en loadAllData', error.message);
-                showMessage(`Error al cargar productos: ${error.message}`, 'error');
+                showMessage('Error al cargar productos', 'error');
                 // Crear fila vacía en caso de error
-                const tableBody = document.getElementById('tableBody');
-                if (tableBody.children.length === 0) {
-                    createNewRow();
-                }
+                createNewRow();
             }
         }
 
@@ -785,22 +683,17 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
-            debugLog('📥 Archivo CSV exportado');
         }
 
         // Inicialización
         document.addEventListener('DOMContentLoaded', function() {
-            debugLog('🚀 Aplicación iniciada');
-            debugLog('🌐 API Base URL', API_BASE_URL);
-            
             // Event listeners para actualizar tipos de cambio
             document.getElementById('usd-to-ars').addEventListener('input', function() {
-                debugLog('💱 Tipo de cambio USD-ARS actualizado', this.value);
+                // Puedes agregar lógica para recalcular todas las filas si cambias los tipos de cambio
             });
             
             document.getElementById('usd-to-clp').addEventListener('input', function() {
-                debugLog('💱 Tipo de cambio USD-CLP actualizado', this.value);
+                // Puedes agregar lógica para recalcular todas las filas si cambias los tipos de cambio
             });
             
             // Cargar datos al inicio
