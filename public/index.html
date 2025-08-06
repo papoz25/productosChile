@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hoja de Cálculo con Conversión de Monedas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 10px;
+            background-color: #f5f5f5;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                margin: 5px;
+            }
+            
+            .container {
+                padding: 10px;
+                border-radius: 4px;
+            }
+            
+            h1 {
+                font-size: 20px;
+                margin-bottom: 15px;
+            }
+            
+            .exchange-rates {
+                padding: 10px;
+            }
+            
+            .rates-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .rate-item {
+                padding: 6px 8px;
+                font-size: 14px;
+            }
+            
+            .rate-input {
+                width: 80px;
+                font-size: 14px;
+            }
+            
+            /* Tabla horizontal scrollable en móviles */
+            .table-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                margin: 10px -10px;
+            }
+            
+            table {
+                min-width: 800px;
+                font-size: 14px;
+            }
+            
+            th, td {
+                padding: 8px 6px;
+                min-width: 100px;
+            }
+            
+            th:first-child, td:first-child {
+                min-width: 120px;
+            }
+            
+            input[type="text"], input[type="number"], select {
+                padding: 6px;
+                font-size: 14px;
+            }
+            
+            .currency-cell input {
+                padding-left: 20px;
+            }
+            
+            .delete-btn {
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+            
+            .add-row-btn, .export-btn, .save-btn, .load-btn {
+                padding: 12px 16px;
+                font-size: 14px;
+                width: 100%;
+                margin: 10px 0 5px 0;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 18px;
+            }
+            
+            .exchange-rates h3 {
+                font-size: 16px;
+            }
+            
+            table {
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 6px 4px;
+                min-width: 90px;
+            }
+            
+            input[type="text"], input[type="number"], select {
+                padding: 5px;
+                font-size: 12px;
+            }
+            
+            .currency-symbol {
+                font-size: 12px;
+                left: 6px;
+            }
+            
+            .currency-cell input {
+                padding-left: 18px;
+            }
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .exchange-rates {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .exchange-rates h3 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+        
+        .rates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .rate-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+        
+        .rate-input {
+            width: 100px;
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            text-align: right;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        th {
+            background-color: #4caf50;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+        }
+        
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        
+        input[type="number"] {
+            text-align: right;
+        }
+        
+        .currency-cell {
+            position: relative;
+        }
+        
+        .currency-symbol {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            pointer-events: none;
+        }
+        
+        .currency-cell input {
+            padding-left: 25px;
+        }
+        
+        select {
+            background-color: white;
+        }
+        
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .add-row-btn, .export-btn, .save-btn, .load-btn {
+            background-color: #4caf50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .export-btn {
+            background-color: #2196f3;
+        }
+        
+        .save-btn {
+            background-color: #ff9800;
+        }
+        
+        .load-btn {
+            background-color: #9c27b0;
+        }
+        
+        .add-row-btn:hover {
+            background-color: #45a049;
+        }
+        
+        .export-btn:hover {
+            background-color: #0b7dda;
+        }
+        
+        .save-btn:hover {
+            background-color: #f57c00;
+        }
+        
+        .load-btn:hover {
+            background-color: #7b1fa2;
+        }
+        
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .delete-btn:hover {
+            background-color: #da190b;
+        }
+        
+        .status-message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Hoja de Cálculo con Conversión de Monedas</h1>
+        
+        <div id="statusMessage" class="hidden"></div>
+        
+        <div class="exchange-rates">
+            <h3>💱 Tipos de Cambio (31/07/2025)</h3>
+            <div class="rates-grid">
+                <div class="rate-item">
+                    <span>1 USD =</span>
+                    <input type="number" id="usd-to-ars" class="rate-input" value="1330.92" step="0.01">
+                    <span>ARS</span>
+                </div>
+                <div class="rate-item">
+                    <span>1 USD =</span>
+                    <input type="number" id="usd-to-clp" class="rate-input" value="955" step="0.01">
+                    <span>CLP</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table id="productTable">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Estado</th>
+                        <th>Link</th>
+                        <th>Precio USD ($)</th>
+                        <th>Precio ARS ($)</th>
+                        <th>Precio CLP ($)</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Las filas se cargarán dinámicamente -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="btn-group">
+            <button class="add-row-btn" onclick="addRow()">➕ Agregar Fila</button>
+            <button class="save-btn" onclick="saveAllData()">💾 Guardar Todo</button>
+            <button class="load-btn" onclick="loadAllData()">📂 Cargar Datos</button>
+            <button class="export-btn" onclick="exportToCSV()">📥 Exportar CSV</button>
+        </div>
+    </div>
+
+    <script>
+        let isUpdating = false;
+        let productos = [];
+        const API_BASE_URL = '/api'; // Cambia esto si tu backend está en otro puerto
+
+        // Funciones de utilidad para mostrar mensajes
+        function showMessage(message, type = 'info') {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.textContent = message;
+            statusEl.className = `status-message status-${type}`;
+            statusEl.classList.remove('hidden');
+            
+            setTimeout(() => {
+                statusEl.classList.add('hidden');
+            }, 3000);
+        }
+
+        function getRates() {
+            return {
+                usdToArs: parseFloat(document.getElementById('usd-to-ars').value) || 1330.92,
+                usdToClp: parseFloat(document.getElementById('usd-to-clp').value) || 955
+            };
+        }
+
+        function updateCurrencies(changedInput) {
+            if (isUpdating) return;
+            isUpdating = true;
+            
+            const row = changedInput.closest('tr');
+            const usdInput = row.querySelector('.usd-input');
+            const arsInput = row.querySelector('.ars-input');
+            const clpInput = row.querySelector('.clp-input');
+            
+            const rates = getRates();
+            const inputValue = parseFloat(changedInput.value) || 0;
+            
+            // Limpiar las otras celdas primero
+            if (changedInput === usdInput) {
+                arsInput.value = '';
+                clpInput.value = '';
+            } else if (changedInput === arsInput) {
+                usdInput.value = '';
+                clpInput.value = '';
+            } else if (changedInput === clpInput) {
+                usdInput.value = '';
+                arsInput.value = '';
+            }
+            
+            // Calcular conversiones solo si hay un valor
+            if (inputValue > 0) {
+                if (changedInput === usdInput) {
+                    arsInput.value = (inputValue * rates.usdToArs).toFixed(2);
+                    clpInput.value = (inputValue * rates.usdToClp).toFixed(2);
+                } 
+                else if (changedInput === arsInput) {
+                    const calculatedUsd = inputValue / rates.usdToArs;
+                    usdInput.value = calculatedUsd.toFixed(2);
+                    clpInput.value = (calculatedUsd * rates.usdToClp).toFixed(2);
+                }
+                else if (changedInput === clpInput) {
+                    const calculatedUsd = inputValue / rates.usdToClp;
+                    usdInput.value = calculatedUsd.toFixed(2);
+                    arsInput.value = (calculatedUsd * rates.usdToArs).toFixed(2);
+                }
+            }
+            
+            isUpdating = false;
+        }
+
+        function createNewRow(producto = {}) {
+            const tableBody = document.getElementById('tableBody');
+            const newRow = document.createElement('tr');
+            
+            newRow.innerHTML = `
+                <td><input type="text" placeholder="Nombre del producto" value="${producto.nombre || ''}"></td>
+                <td>
+                    <select>
+                        <option value="">Seleccionar</option>
+                        <option value="nuevo" ${producto.estado === 'nuevo' ? 'selected' : ''}>Nuevo</option>
+                        <option value="usado" ${producto.estado === 'usado' ? 'selected' : ''}>Usado</option>
+                    </select>
+                </td>
+                <td><input type="text" placeholder="https://..." value="${producto.link || ''}"></td>
+                <td class="currency-cell">
+                    <span class="currency-symbol">$</span>
+                    <input type="number" class="usd-input" step="0.01" placeholder="0.00" value="${producto.precio_usd || ''}">
+                </td>
+                <td class="currency-cell">
+                    <span class="currency-symbol">$</span>
+                    <input type="number" class="ars-input" step="0.01" placeholder="0.00" value="${producto.precio_ars || ''}">
+                </td>
+                <td class="currency-cell">
+                    <span class="currency-symbol">$</span>
+                    <input type="number" class="clp-input" step="0.01" placeholder="0.00" value="${producto.precio_clp || ''}">
+                </td>
+                <td>
+                    <button class="delete-btn" onclick="deleteRow(this)">🗑️ Eliminar</button>
+                </td>
+            `;
+            
+            // Agregar data-id si el producto tiene ID (viene de la base de datos)
+            if (producto.id) {
+                newRow.setAttribute('data-id', producto.id);
+            }
+            
+            tableBody.appendChild(newRow);
+            attachEventListeners(newRow);
+            
+            return newRow;
+        }
+
+        function addRow() {
+            createNewRow();
+        }
+
+        function deleteRow(button) {
+            const row = button.closest('tr');
+            const productId = row.getAttribute('data-id');
+            
+            if (productId) {
+                // Si tiene ID, eliminar de la base de datos
+                if (confirm('¿Estás seguro de que quieres eliminar este producto de la base de datos?')) {
+                    deleteProductFromDB(productId, row);
+                }
+            } else {
+                // Si no tiene ID, solo eliminar de la interfaz
+                row.remove();
+            }
+        }
+
+        async function deleteProductFromDB(productId, row) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/productos/${productId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    row.remove();
+                    showMessage('Producto eliminado exitosamente', 'success');
+                } else {
+                    throw new Error('Error al eliminar producto');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Error al eliminar producto', 'error');
+            }
+        }
+
+        function attachEventListeners(row) {
+            const currencyInputs = row.querySelectorAll('.usd-input, .ars-input, .clp-input');
+            currencyInputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    updateCurrencies(this);
+                });
+            });
+        }
+
+        function getRowData(row) {
+            const inputs = row.querySelectorAll('input, select');
+            return {
+                nombre: inputs[0].value || null,
+                estado: inputs[1].value || null,
+                link: inputs[2].value || null,
+                precio_usd: parseFloat(inputs[3].value) || null,
+                precio_ars: parseFloat(inputs[4].value) || null,
+                precio_clp: parseFloat(inputs[5].value) || null
+            };
+        }
+
+        async function saveAllData() {
+            const tableBody = document.getElementById('tableBody');
+            const rows = tableBody.querySelectorAll('tr');
+            let savedCount = 0;
+            let errorCount = 0;
+            
+            showMessage('Guardando productos...', 'info');
+            
+            for (let row of rows) {
+                const rowData = getRowData(row);
+                
+                // Solo guardar si hay al menos un nombre de producto
+                if (rowData.nombre && rowData.nombre.trim() !== '') {
+                    try {
+                        const productId = row.getAttribute('data-id');
+                        let response;
+                        
+                        if (productId) {
+                            // Actualizar producto existente
+                            response = await fetch(`${API_BASE_URL}/productos/${productId}`, {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify(rowData)
+                            });
+                        } else {
+                            // Crear nuevo producto
+                            response = await fetch(`${API_BASE_URL}/productos`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify(rowData)
+                            });
+                        }
+                        
+                        if (response.ok) {
+                            const savedProduct = await response.json();
+                            // Agregar ID a la fila si es un nuevo producto
+                            if (!productId) {
+                                row.setAttribute('data-id', savedProduct.id);
+                            }
+                            savedCount++;
+                        } else {
+                            throw new Error('Error al guardar');
+                        }
+                    } catch (error) {
+                        console.error('Error al guardar producto:', error);
+                        errorCount++;
+                    }
+                }
+            }
+            
+            if (errorCount === 0) {
+                showMessage(`${savedCount} productos guardados exitosamente`, 'success');
+            } else {
+                showMessage(`${savedCount} productos guardados, ${errorCount} errores`, 'error');
+            }
+        }
+
+        async function loadAllData() {
+            try {
+                showMessage('Cargando productos...', 'info');
+                
+                const response = await fetch(`${API_BASE_URL}/productos`);
+                if (!response.ok) {
+                    throw new Error('Error al cargar productos');
+                }
+                
+                const productos = await response.json();
+                
+                // Limpiar tabla actual
+                const tableBody = document.getElementById('tableBody');
+                tableBody.innerHTML = '';
+                
+                // Cargar productos desde la base de datos
+                if (productos.length > 0) {
+                    productos.forEach(producto => {
+                        createNewRow(producto);
+                    });
+                    showMessage(`${productos.length} productos cargados exitosamente`, 'success');
+                } else {
+                    // Si no hay productos, crear una fila vacía
+                    createNewRow();
+                    showMessage('No hay productos guardados. Se creó una fila nueva.', 'info');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Error al cargar productos', 'error');
+                // Crear fila vacía en caso de error
+                createNewRow();
+            }
+        }
+
+        function exportToCSV() {
+            const table = document.getElementById('productTable');
+            const rows = table.querySelectorAll('tr');
+            let csv = [];
+            
+            // Agregar encabezados
+            const headers = ['Producto', 'Estado', 'Link', 'Precio USD', 'Precio ARS', 'Precio CLP'];
+            csv.push(headers.join(','));
+            
+            // Agregar datos
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                const cells = row.querySelectorAll('input, select');
+                const rowData = [];
+                
+                cells.forEach((cell, index) => {
+                    if (index < 6) { // Solo las primeras 6 columnas (excluir acciones)
+                        let value = cell.value || '';
+                        // Escapar comillas y agregar comillas si contiene comas
+                        if (value.includes(',') || value.includes('"')) {
+                            value = '"' + value.replace(/"/g, '""') + '"';
+                        }
+                        rowData.push(value);
+                    }
+                });
+                
+                if (rowData.some(cell => cell.trim() !== '')) { // Solo agregar filas no vacías
+                    csv.push(rowData.join(','));
+                }
+            }
+            
+            // Descargar archivo
+            const csvContent = csv.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'productos_con_precios.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            // Event listeners para actualizar tipos de cambio
+            document.getElementById('usd-to-ars').addEventListener('input', function() {
+                // Puedes agregar lógica para recalcular todas las filas si cambias los tipos de cambio
+            });
+            
+            document.getElementById('usd-to-clp').addEventListener('input', function() {
+                // Puedes agregar lógica para recalcular todas las filas si cambias los tipos de cambio
+            });
+            
+            // Cargar datos al inicio
+            loadAllData();
+        });
+    </script>
+</body>
+</html>
