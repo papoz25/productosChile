@@ -1,12 +1,12 @@
 {
   "name": "productos-chile-app",
   "version": "1.0.0",
-  "description": "Aplicación para gestionar productos con conversión de monedas y base de datos PostgreSQL",
+  "description": "Aplicación para gestionar productos con conversión de monedas",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "build": "echo 'No build needed for this app'",
+    "build": "echo 'No build step required'",
     "init-db": "node init_db_script.js"
   },
   "dependencies": {
@@ -20,7 +20,7 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "keywords": ["productos", "monedas", "postgresql", "neon"],
+  "keywords": ["productos", "monedas", "postgresql", "render"],
   "author": "Tu Nombre",
   "license": "MIT"
 }
