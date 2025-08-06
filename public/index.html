@@ -297,12 +297,64 @@
             background-color: #da190b;
         }
         
+        /* Nuevo CSS para el spinner */
+        .spinner-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+        }
+
+        .spinner-overlay.show {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.3s ease;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Nuevas clases para transiciones de mensajes */
         .status-message {
             padding: 10px;
             margin: 10px 0;
             border-radius: 4px;
             text-align: center;
             font-weight: bold;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        
+        .status-message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .status-message.hidden {
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.4s ease, transform 0.4s ease 0.5s;
         }
         
         .status-success {
@@ -322,24 +374,20 @@
             color: #0c5460;
             border: 1px solid #bee5eb;
         }
-        
-        .hidden {
-            display: none;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>📊 Hoja de Cálculo con Conversión de Monedas</h1>
         
-        <div id="statusMessage" class="hidden"></div>
+        <div id="statusMessage" class="status-message"></div>
         
         <div class="exchange-rates">
-            <h3>💱 Tipos de Cambio (31/07/2025)</h3>
+            <h3>💱 Tipos de Cambio</h3>
             <div class="rates-grid">
                 <div class="rate-item">
                     <span>1 USD =</span>
-                    <input type="number" id="usd-to-ars" class="rate-input" value="1330.92" step="0.01">
+                    <input type="number" id="usd-to-ars" class="rate-input" value="1330" step="0.01">
                     <span>ARS</span>
                 </div>
                 <div class="rate-item">
@@ -364,8 +412,7 @@
                     </tr>
                 </thead>
                 <tbody id="tableBody">
-                    <!-- Las filas se cargarán dinámicamente -->
-                </tbody>
+                    </tbody>
             </table>
         </div>
         
@@ -376,6 +423,10 @@
             <button class="export-btn" onclick="exportToCSV()">📥 Exportar CSV</button>
         </div>
     </div>
+    
+    <div id="loadingSpinner" class="spinner-overlay">
+        <div class="spinner"></div>
+    </div>
 
     <script>
         let isUpdating = false;
@@ -385,13 +436,23 @@
         // Funciones de utilidad para mostrar mensajes
         function showMessage(message, type = 'info') {
             const statusEl = document.getElementById('statusMessage');
+            
+            // Quitar clases de show/hidden para resetear
+            statusEl.classList.remove('show', 'hidden', 'status-success', 'status-error', 'status-info');
+            
+            // Configurar el mensaje
             statusEl.textContent = message;
             statusEl.className = `status-message status-${type}`;
-            statusEl.classList.remove('hidden');
             
+            // Mostrar el mensaje con la transición
+            setTimeout(() => {
+                statusEl.classList.add('show');
+            }, 50); // Pequeño retraso para asegurar la transición
+            
+            // Desaparecer el mensaje gradualmente después de 4 segundos
             setTimeout(() => {
                 statusEl.classList.add('hidden');
-            }, 3000);
+            }, 4000); // 4000 milisegundos = 4 segundos
         }
 
         function getRates() {
@@ -551,64 +612,68 @@
             const rows = tableBody.querySelectorAll('tr');
             let savedCount = 0;
             let errorCount = 0;
+            const spinnerEl = document.getElementById('loadingSpinner');
             
+            // Mostrar spinner antes de guardar
+            spinnerEl.classList.add('show');
             showMessage('Guardando productos...', 'info');
             
-            for (let row of rows) {
-                const rowData = getRowData(row);
-                
-                // Solo guardar si hay al menos un nombre de producto
-                if (rowData.nombre && rowData.nombre.trim() !== '') {
-                    try {
-                        const productId = row.getAttribute('data-id');
-                        let response;
-                        
-                        if (productId) {
-                            // Actualizar producto existente
-                            response = await fetch(`${API_BASE_URL}/productos/${productId}`, {
-                                method: 'PUT',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify(rowData)
-                            });
-                        } else {
-                            // Crear nuevo producto
-                            response = await fetch(`${API_BASE_URL}/productos`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify(rowData)
-                            });
-                        }
-                        
-                        if (response.ok) {
-                            const savedProduct = await response.json();
-                            // Agregar ID a la fila si es un nuevo producto
-                            if (!productId) {
-                                row.setAttribute('data-id', savedProduct.id);
+            try {
+                for (let row of rows) {
+                    const rowData = getRowData(row);
+                    
+                    if (rowData.nombre && rowData.nombre.trim() !== '') {
+                        try {
+                            const productId = row.getAttribute('data-id');
+                            let response;
+                            
+                            if (productId) {
+                                response = await fetch(`${API_BASE_URL}/productos/${productId}`, {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(rowData)
+                                });
+                            } else {
+                                response = await fetch(`${API_BASE_URL}/productos`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(rowData)
+                                });
                             }
-                            savedCount++;
-                        } else {
-                            throw new Error('Error al guardar');
+                            
+                            if (response.ok) {
+                                const savedProduct = await response.json();
+                                if (!productId) {
+                                    row.setAttribute('data-id', savedProduct.id);
+                                }
+                                savedCount++;
+                            } else {
+                                throw new Error('Error al guardar');
+                            }
+                        } catch (error) {
+                            console.error('Error al guardar producto:', error);
+                            errorCount++;
                         }
-                    } catch (error) {
-                        console.error('Error al guardar producto:', error);
-                        errorCount++;
                     }
                 }
-            }
-            
-            if (errorCount === 0) {
-                showMessage(`${savedCount} productos guardados exitosamente`, 'success');
-            } else {
-                showMessage(`${savedCount} productos guardados, ${errorCount} errores`, 'error');
+                
+                if (errorCount === 0) {
+                    showMessage(`${savedCount} productos guardados exitosamente`, 'success');
+                } else {
+                    showMessage(`${savedCount} productos guardados, ${errorCount} errores`, 'error');
+                }
+            } finally {
+                spinnerEl.classList.remove('show');
             }
         }
 
         async function loadAllData() {
+            const spinnerEl = document.getElementById('loadingSpinner');
+            
             try {
+                // Mostrar el spinner antes de la llamada a la API
+                spinnerEl.classList.add('show');
+                
                 showMessage('Cargando productos...', 'info');
                 
                 const response = await fetch(`${API_BASE_URL}/productos`);
@@ -622,22 +687,21 @@
                 const tableBody = document.getElementById('tableBody');
                 tableBody.innerHTML = '';
                 
-                // Cargar productos desde la base de datos
                 if (productos.length > 0) {
                     productos.forEach(producto => {
                         createNewRow(producto);
                     });
                     showMessage(`${productos.length} productos cargados exitosamente`, 'success');
                 } else {
-                    // Si no hay productos, crear una fila vacía
                     createNewRow();
                     showMessage('No hay productos guardados. Se creó una fila nueva.', 'info');
                 }
             } catch (error) {
                 console.error('Error:', error);
                 showMessage('Error al cargar productos', 'error');
-                // Crear fila vacía en caso de error
                 createNewRow();
+            } finally {
+                spinnerEl.classList.remove('show');
             }
         }
 
