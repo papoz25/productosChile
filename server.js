@@ -35,11 +35,7 @@ pool.on('error', (err) => {
   console.error('❌ Error inesperado en PostgreSQL:', err);
 });
 
-// Crear tabla si no existe
-// server.js
-
-// ... (después de la configuración del pool)
-
+// Crear tabla si no existe (versión simplificada)
 async function initDB() {
   const createTableQuery = `
     CREATE TABLE IF NOT EXISTS productos (
@@ -56,7 +52,7 @@ async function initDB() {
   `;
   
   try {
-    console.log('🔄 Inicializando base de datos (versión simple)...');
+    console.log('🔄 Inicializando base de datos...');
     await pool.query(createTableQuery);
     console.log('✅ Tabla "productos" creada o ya existente.');
     
@@ -70,40 +66,9 @@ async function initDB() {
   }
 }
 
-// ... (el resto de tu código de server.js sigue igual)
-    // Crear función para actualizar updated_at automáticamente
-    await pool.query(`
-      CREATE OR REPLACE FUNCTION update_updated_at_column()
-      RETURNS TRIGGER AS $$
-      BEGIN
-          NEW.updated_at = CURRENT_TIMESTAMP;
-          RETURN NEW;
-      END;
-      $$ LANGUAGE plpgsql;
-    `);
-    
-    await pool.query(`
-      DROP TRIGGER IF EXISTS update_productos_updated_at ON productos;
-      CREATE TRIGGER update_productos_updated_at
-          BEFORE UPDATE ON productos
-          FOR EACH ROW
-          EXECUTE FUNCTION update_updated_at_column();
-    `);
-    
-    // Verificar que la tabla existe
-    const result = await pool.query("SELECT COUNT(*) FROM productos");
-    console.log(`✅ Base de datos inicializada. Productos existentes: ${result.rows[0].count}`);
-    
-  } catch (error) {
-    console.error('❌ Error al inicializar base de datos:', error);
-    throw error; // Re-lanzar el error para detener el servidor si falla
-  }
-}
-
-// Health check endpoint mejorado
+// Health check endpoint
 app.get('/health', async (req, res) => {
   try {
-    // Test de conexión a la base de datos
     await pool.query('SELECT 1');
     res.json({ 
       status: 'OK', 
@@ -121,7 +86,7 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// Rutas API con mejor manejo de errores
+// --- Rutas API ---
 
 // Obtener todos los productos
 app.get('/api/productos', async (req, res) => {
@@ -146,7 +111,6 @@ app.post('/api/productos', async (req, res) => {
     
     console.log('📝 Creando producto:', { nombre, estado });
     
-    // Validación básica
     if (!nombre || nombre.trim() === '') {
       return res.status(400).json({ error: 'El nombre del producto es requerido' });
     }
@@ -176,7 +140,6 @@ app.put('/api/productos/:id', async (req, res) => {
     
     console.log('✏️ Actualizando producto ID:', id);
     
-    // Validación básica
     if (!nombre || nombre.trim() === '') {
       return res.status(400).json({ error: 'El nombre del producto es requerido' });
     }
@@ -250,15 +213,14 @@ async function startServer() {
     app.listen(PORT, () => {
       console.log(`🚀 Servidor ejecutándose en puerto ${PORT}`);
       console.log(`🌐 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🔗 URL: https://productoschile.onrender.com`);
     });
   } catch (error) {
-    console.error('❌ Error al iniciar servidor:', error);
+    console.error('❌ Error fatal al iniciar servidor:', error);
     process.exit(1);
   }
 }
 
-// Manejo graceful de cierre
+// Manejo de cierre
 process.on('SIGTERM', async () => {
   console.log('🛑 SIGTERM recibido, cerrando servidor...');
   await pool.end();
@@ -271,4 +233,5 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
+// Iniciar el servidor
 startServer();
