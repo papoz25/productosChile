@@ -12,8 +12,15 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Configuración de la base de datos
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  console.error('❌ FATAL ERROR: La variable de entorno DATABASE_URL no está definida.');
+  process.exit(1); // Detiene la aplicación si la URL no existe
+}
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_jyJzR5TC7AEZ@ep-proud-salad-acknzm47-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require',
+  connectionString: connectionString,
   ssl: {
     rejectUnauthorized: false
   }
