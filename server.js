@@ -36,24 +36,41 @@ pool.on('error', (err) => {
 });
 
 // Crear tabla si no existe
+// server.js
+
+// ... (después de la configuración del pool)
+
 async function initDB() {
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS productos (
+      id SERIAL PRIMARY KEY,
+      nombre VARCHAR(255) NOT NULL,
+      estado VARCHAR(50) CHECK (estado IN ('nuevo', 'usado')),
+      link TEXT,
+      precio_usd DECIMAL(10,2),
+      precio_ars DECIMAL(15,2),
+      precio_clp DECIMAL(15,2),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `;
+  
   try {
-    console.log('🔄 Inicializando base de datos...');
+    console.log('🔄 Inicializando base de datos (versión simple)...');
+    await pool.query(createTableQuery);
+    console.log('✅ Tabla "productos" creada o ya existente.');
     
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS productos (
-        id SERIAL PRIMARY KEY,
-        nombre VARCHAR(255) NOT NULL,
-        estado VARCHAR(50) CHECK (estado IN ('nuevo', 'usado')),
-        link TEXT,
-        precio_usd DECIMAL(10,2),
-        precio_ars DECIMAL(15,2),
-        precio_clp DECIMAL(15,2),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
+    // Verificamos que la tabla existe contando las filas
+    const result = await pool.query("SELECT COUNT(*) FROM productos");
+    console.log(`📊 Productos existentes: ${result.rows[0].count}`);
     
+  } catch (error) {
+    console.error('❌ Error al inicializar la base de datos:', error);
+    throw error; // Detener el servidor si la inicialización falla
+  }
+}
+
+// ... (el resto de tu código de server.js sigue igual)
     // Crear función para actualizar updated_at automáticamente
     await pool.query(`
       CREATE OR REPLACE FUNCTION update_updated_at_column()
