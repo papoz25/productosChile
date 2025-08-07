@@ -175,6 +175,30 @@
             text-align: right;
         }
         
+        /* Controles de búsqueda y ordenación */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-container {
+            flex-grow: 1;
+            min-width: 200px;
+        }
+        
+        .search-container input {
+            width: 100%;
+        }
+
+        .sort-options {
+            display: flex;
+            gap: 10px;
+        }
+        
         table {
             width: 100%;
             border-collapse: collapse;
@@ -187,6 +211,25 @@
             padding: 12px;
             text-align: left;
             font-weight: bold;
+            cursor: pointer; /* Cursor de puntero para indicar que se puede hacer clic */
+            position: relative;
+        }
+
+        .sort-icon {
+            margin-left: 5px;
+            font-size: 10px;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        th.asc .sort-icon::after {
+            content: '▲';
+        }
+
+        th.desc .sort-icon::after {
+            content: '▼';
         }
         
         td {
@@ -397,17 +440,23 @@
                 </div>
             </div>
         </div>
+
+        <div class="controls">
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Buscar producto...">
+            </div>
+        </div>
         
         <div class="table-container">
             <table id="productTable">
                 <thead>
                     <tr>
-                        <th>Producto</th>
+                        <th data-column="nombre">Producto <span class="sort-icon"></span></th>
                         <th>Estado</th>
                         <th>Link</th>
-                        <th>Precio USD ($)</th>
-                        <th>Precio ARS ($)</th>
-                        <th>Precio CLP ($)</th>
+                        <th data-column="precio_usd">Precio USD ($) <span class="sort-icon"></span></th>
+                        <th data-column="precio_ars">Precio ARS ($) <span class="sort-icon"></span></th>
+                        <th data-column="precio_clp">Precio CLP ($) <span class="sort-icon"></span></th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -431,6 +480,8 @@
     <script>
         let isUpdating = false;
         let productos = [];
+        let sortColumn = null;
+        let sortDirection = 'asc';
         const API_BASE_URL = '/api'; // Cambia esto si tu backend está en otro puerto
 
         // Funciones de utilidad para mostrar mensajes
@@ -577,6 +628,8 @@
                 if (response.ok) {
                     row.remove();
                     showMessage('Producto eliminado exitosamente', 'success');
+                    // Actualizar el array de productos después de la eliminación
+                    productos = productos.filter(p => p.id != productId);
                 } else {
                     throw new Error('Error al eliminar producto');
                 }
@@ -603,7 +656,8 @@
                 link: inputs[2].value || null,
                 precio_usd: parseFloat(inputs[3].value) || null,
                 precio_ars: parseFloat(inputs[4].value) || null,
-                precio_clp: parseFloat(inputs[5].value) || null
+                precio_clp: parseFloat(inputs[5].value) || null,
+                id: row.getAttribute('data-id') || null
             };
         }
 
@@ -645,6 +699,8 @@
                                 const savedProduct = await response.json();
                                 if (!productId) {
                                     row.setAttribute('data-id', savedProduct.id);
+                                    // Agregar al array de productos
+                                    productos.push(savedProduct);
                                 }
                                 savedCount++;
                             } else {
@@ -681,7 +737,7 @@
                     throw new Error('Error al cargar productos');
                 }
                 
-                const productos = await response.json();
+                productos = await response.json();
                 
                 // Limpiar tabla actual
                 const tableBody = document.getElementById('tableBody');
@@ -704,7 +760,7 @@
                 spinnerEl.classList.remove('show');
             }
         }
-
+        
         function exportToCSV() {
             const table = document.getElementById('productTable');
             const rows = table.querySelectorAll('tr');
@@ -749,17 +805,90 @@
             document.body.removeChild(link);
         }
 
+        // --- Nuevas funciones para búsqueda y ordenación ---
+        
+        function searchProducts(searchTerm) {
+            const rows = document.querySelectorAll('#tableBody tr');
+            rows.forEach(row => {
+                const productName = row.querySelector('input[type="text"]').value.toLowerCase();
+                if (productName.includes(searchTerm.toLowerCase())) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+        
+        function sortTable(column) {
+            const tableBody = document.getElementById('tableBody');
+            const rows = Array.from(tableBody.querySelectorAll('tr'));
+
+            // Alternar la dirección si la columna es la misma
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+
+            // Actualizar los íconos de ordenación
+            const headers = document.querySelectorAll('th[data-column]');
+            headers.forEach(header => {
+                header.classList.remove('asc', 'desc');
+                if (header.getAttribute('data-column') === sortColumn) {
+                    header.classList.add(sortDirection);
+                }
+            });
+
+            rows.sort((a, b) => {
+                let aValue, bValue;
+
+                if (column === 'nombre') {
+                    aValue = a.querySelector('input[type="text"]').value.toLowerCase();
+                    bValue = b.querySelector('input[type="text"]').value.toLowerCase();
+                } else {
+                    aValue = parseFloat(a.querySelector(`.${column.replace('_', '-')}-input`).value) || 0;
+                    bValue = parseFloat(b.querySelector(`.${column.replace('_', '-')}-input`).value) || 0;
+                }
+
+                if (aValue < bValue) {
+                    return sortDirection === 'asc' ? -1 : 1;
+                }
+                if (aValue > bValue) {
+                    return sortDirection === 'asc' ? 1 : -1;
+                }
+                return 0;
+            });
+
+            // Reinsertar las filas ordenadas
+            rows.forEach(row => tableBody.appendChild(row));
+        }
+
         // Inicialización
         document.addEventListener('DOMContentLoaded', function() {
             // Event listeners para actualizar tipos de cambio
             document.getElementById('usd-to-ars').addEventListener('input', function() {
-                // Puedes agregar lógica para recalcular todas las filas si cambias los tipos de cambio
+                 // Aquí puedes agregar la lógica para recalcular todas las filas
             });
             
             document.getElementById('usd-to-clp').addEventListener('input', function() {
-                // Puedes agregar lógica para recalcular todas las filas si cambias los tipos de cambio
+                 // Aquí puedes agregar la lógica para recalcular todas las filas
+            });
+
+            // Event listener para la búsqueda
+            document.getElementById('searchInput').addEventListener('input', function(e) {
+                searchProducts(e.target.value);
             });
             
+            // Event listeners para la ordenación
+            const headers = document.querySelectorAll('th[data-column]');
+            headers.forEach(header => {
+                header.addEventListener('click', function() {
+                    const column = this.getAttribute('data-column');
+                    sortTable(column);
+                });
+            });
+
             // Cargar datos al inicio
             loadAllData();
         });
