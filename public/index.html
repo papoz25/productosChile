@@ -1,961 +1,967 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hoja de Cálculo con Conversión de Monedas</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 10px;
-            background-color: #f5f5f5;
-            padding: 0;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background-color: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            body {
-                margin: 5px;
-            }
-            
-            .container {
-                padding: 10px;
-                border-radius: 4px;
-            }
-            
-            h1 {
-                font-size: 20px;
-                margin-bottom: 15px;
-            }
-            
-            .exchange-rates {
-                padding: 10px;
-            }
-            
-            .rates-grid {
-                grid-template-columns: 1fr;
-                gap: 8px;
-            }
-            
-            .rate-item {
-                padding: 6px 8px;
-                font-size: 14px;
-            }
-            
-            .rate-input {
-                width: 80px;
-                font-size: 14px;
-            }
-            
-            /* Tabla horizontal scrollable en móviles */
-            .table-container {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-                margin: 10px -10px;
-            }
-            
-            table {
-                min-width: 800px;
-                font-size: 14px;
-            }
-            
-            th, td {
-                padding: 8px 6px;
-                min-width: 100px;
-            }
-            
-            th:first-child, td:first-child {
-                min-width: 120px;
-            }
-            
-            input[type="text"], input[type="number"], select {
-                padding: 6px;
-                font-size: 14px;
-            }
-            
-            .currency-cell input {
-                padding-left: 20px;
-            }
-            
-            .delete-btn {
-                padding: 4px 8px;
-                font-size: 11px;
-            }
-            
-            .add-row-btn, .export-btn, .save-btn, .load-btn {
-                padding: 12px 16px;
-                font-size: 14px;
-                width: 100%;
-                margin: 10px 0 5px 0;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            h1 {
-                font-size: 18px;
-            }
-            
-            .exchange-rates h3 {
-                font-size: 16px;
-            }
-            
-            table {
-                font-size: 12px;
-            }
-            
-            th, td {
-                padding: 6px 4px;
-                min-width: 90px;
-            }
-            
-            input[type="text"], input[type="number"], select {
-                padding: 5px;
-                font-size: 12px;
-            }
-            
-            .currency-symbol {
-                font-size: 12px;
-                left: 6px;
-            }
-            
-            .currency-cell input {
-                padding-left: 18px;
-            }
-        }
-        
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .exchange-rates {
-            background-color: #e3f2fd;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border-left: 4px solid #2196f3;
-        }
-        
-        .exchange-rates h3 {
-            margin-top: 0;
-            color: #1976d2;
-        }
-        
-        .rates-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            margin-top: 10px;
-        }
-        
-        .rate-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: white;
-            padding: 8px 12px;
-            border-radius: 4px;
-        }
-        
-        .rate-input {
-            width: 100px;
-            padding: 4px 8px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-            text-align: right;
-        }
-        
-        /* Controles de búsqueda y ordenación */
-        .controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hoja de Cálculo con Conversión de Monedas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 10px;
+            background-color: #f5f5f5;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                margin: 5px;
+            }
+            
+            .container {
+                padding: 10px;
+                border-radius: 4px;
+            }
+            
+            h1 {
+                font-size: 20px;
+                margin-bottom: 15px;
+            }
+            
+            .exchange-rates {
+                padding: 10px;
+            }
+            
+            .rates-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .rate-item {
+                padding: 6px 8px;
+                font-size: 14px;
+            }
+            
+            .rate-input {
+                width: 80px;
+                font-size: 14px;
+            }
+            
+            /* Tabla horizontal scrollable en móviles */
+            .table-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                margin: 10px -10px;
+            }
+            
+            table {
+                min-width: 800px;
+                font-size: 14px;
+            }
+            
+            th, td {
+                padding: 8px 6px;
+                min-width: 100px;
+            }
+            
+            th:first-child, td:first-child {
+                min-width: 120px;
+            }
+            
+            input[type="text"], input[type="number"], select {
+                padding: 6px;
+                font-size: 14px;
+            }
+            
+            .currency-cell input {
+                padding-left: 20px;
+            }
+            
+            .delete-btn {
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+            
+            .add-row-btn, .export-btn, .save-btn, .load-btn {
+                padding: 12px 16px;
+                font-size: 14px;
+                width: 100%;
+                margin: 10px 0 5px 0;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 18px;
+            }
+            
+            .exchange-rates h3 {
+                font-size: 16px;
+            }
+            
+            table {
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 6px 4px;
+                min-width: 90px;
+            }
+            
+            input[type="text"], input[type="number"], select {
+                padding: 5px;
+                font-size: 12px;
+            }
+            
+            .currency-symbol {
+                font-size: 12px;
+                left: 6px;
+            }
+            
+            .currency-cell input {
+                padding-left: 18px;
+            }
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .exchange-rates {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .exchange-rates h3 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+        
+        .rates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .rate-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+        
+        .rate-input {
+            width: 100px;
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            text-align: right;
+        }
+        
+        /* Controles de búsqueda y ordenación */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
 
-        .search-container {
-            flex-grow: 1;
-            min-width: 200px;
-        }
-        
-        .search-container input {
-            width: 100%;
-        }
+        .search-container {
+            flex-grow: 1;
+            min-width: 200px;
+        }
+        
+        .search-container input {
+            width: 100%;
+        }
 
-        .sort-options {
-            display: flex;
-            gap: 10px;
-        }
+        .sort-options {
+            display: flex;
+            gap: 10px;
+        }
 
-        .sort-btn {
-            background-color: #2196f3;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            white-space: nowrap;
-        }
-        
-        .sort-btn:hover {
-            background-color: #0b7dda;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        
-        th {
-            background-color: #4caf50;
-            color: white;
-            padding: 12px;
-            text-align: left;
-            font-weight: bold;
-            cursor: pointer;
-            position: relative;
-        }
+        .sort-btn {
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        
+        .sort-btn:hover {
+            background-color: #0b7dda;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        th {
+            background-color: #4caf50;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+            cursor: pointer;
+            position: relative;
+        }
 
-        .sort-icon {
-            margin-left: 5px;
-            font-size: 10px;
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-        
-        th.asc .sort-icon::after {
-            content: '▲';
-        }
+        .sort-icon {
+            margin-left: 5px;
+            font-size: 10px;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        th.asc .sort-icon::after {
+            content: '▲';
+        }
 
-        th.desc .sort-icon::after {
-            content: '▼';
-        }
-        
-        td {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
-            vertical-align: middle;
-        }
-        
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        
-        tr:hover {
-            background-color: #f5f5f5;
-        }
-        
-        input[type="text"], input[type="number"], select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-size: 14px;
-        }
-        
-        input[type="number"] {
-            text-align: right;
-        }
-        
-        .currency-cell {
-            position: relative;
-        }
-        
-        .currency-symbol {
-            position: absolute;
-            left: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #666;
-            pointer-events: none;
-        }
-        
-        .currency-cell input {
-            padding-left: 25px;
-        }
-        
-        select {
-            background-color: white;
-        }
-        
-        .btn-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        .add-row-btn, .export-btn, .save-btn, .load-btn {
-            background-color: #4caf50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            flex: 1;
-            min-width: 150px;
-        }
-        
-        .export-btn {
-            background-color: #2196f3;
-        }
-        
-        .save-btn {
-            background-color: #ff9800;
-        }
-        
-        .load-btn {
-            background-color: #9c27b0;
-        }
-        
-        .add-row-btn:hover {
-            background-color: #45a049;
-        }
-        
-        .export-btn:hover {
-            background-color: #0b7dda;
-        }
-        
-        .save-btn:hover {
-            background-color: #f57c00;
-        }
-        
-        .load-btn:hover {
-            background-color: #7b1fa2;
-        }
-        
-        .delete-btn {
-            background-color: #f44336;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        
-        .delete-btn:hover {
-            background-color: #da190b;
-        }
-        
-        /* Spinner */
-        .spinner-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0s linear 0.3s;
-        }
+        th.desc .sort-icon::after {
+            content: '▼';
+        }
+        
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            vertical-align: middle;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        
+        input[type="number"] {
+            text-align: right;
+        }
+        
+        .currency-cell {
+            position: relative;
+        }
+        
+        .currency-symbol {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            pointer-events: none;
+        }
+        
+        .currency-cell input {
+            padding-left: 25px;
+        }
+        
+        select {
+            background-color: white;
+        }
+        
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .add-row-btn, .export-btn, .save-btn, .load-btn {
+            background-color: #4caf50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .export-btn {
+            background-color: #2196f3;
+        }
+        
+        .save-btn {
+            background-color: #ff9800;
+        }
+        
+        .load-btn {
+            background-color: #9c27b0;
+        }
+        
+        .add-row-btn:hover {
+            background-color: #45a049;
+        }
+        
+        .export-btn:hover {
+            background-color: #0b7dda;
+        }
+        
+        .save-btn:hover {
+            background-color: #f57c00;
+        }
+        
+        .load-btn:hover {
+            background-color: #7b1fa2;
+        }
+        
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .delete-btn:hover {
+            background-color: #da190b;
+        }
+        
+        /* Spinner */
+        .spinner-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+        }
 
-        .spinner-overlay.show {
-            opacity: 1;
-            visibility: visible;
-            transition: opacity 0.3s ease;
-        }
+        .spinner-overlay.show {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.3s ease;
+        }
 
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
-        /* Mensajes de estado */
-        .status-message {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 4px;
-            text-align: center;
-            font-weight: bold;
-            opacity: 0;
-            transform: translateY(-20px);
-            transition: opacity 0.4s ease, transform 0.4s ease;
-        }
-        
-        .status-message.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        
-        .status-message.hidden {
-            opacity: 0;
-            transform: translateY(-20px);
-            transition: opacity 0.4s ease, transform 0.4s ease 0.5s;
-        }
-        
-        .status-success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .status-error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .status-info {
-            background-color: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-        
-        /* Celda del link */
-        .link-cell {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .link-cell input {
-            flex-grow: 1;
-        }
-        .open-link-btn {
-            background-color: #17a2b8;
-            color: white;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            flex-shrink: 0;
-            white-space: nowrap;
-        }
-        .open-link-btn:hover {
-            background-color: #138496;
-        }
-        .open-link-btn:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
+        /* Mensajes de estado */
+        .status-message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: bold;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        
+        .status-message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .status-message.hidden {
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.4s ease, transform 0.4s ease 0.5s;
+        }
+        
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        /* Celda del link */
+        .link-cell {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .link-cell input {
+            flex-grow: 1;
+        }
+        .open-link-btn {
+            background-color: #17a2b8;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .open-link-btn:hover {
+            background-color: #138496;
+        }
+        .open-link-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
 
-        /* --- NUEVOS ESTILOS PARA EDICIÓN DE FILA --- */
-        .edit-btn, .save-row-btn {
-            background-color: #17a2b8;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 12px;
-            margin-right: 5px;
-        }
+        /* --- NUEVOS ESTILOS PARA EDICIÓN DE FILA --- */
+        .edit-btn, .save-row-btn {
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-right: 5px;
+        }
 
-        .edit-btn:hover, .save-row-btn:hover {
-            background-color: #138496;
-        }
+        .edit-btn:hover, .save-row-btn:hover {
+            background-color: #138496;
+        }
 
-        .save-row-btn {
-            background-color: #28a745;
-        }
+        .save-row-btn {
+            background-color: #28a745;
+        }
 
-        .save-row-btn:hover {
-            background-color: #218838;
-        }
+        .save-row-btn:hover {
+            background-color: #218838;
+        }
 
-        /* Estilo para resaltar la fila en modo de edición */
-        tr.editing-row {
-            background-color: #fffbe6 !important;
-        }
+        /* Estilo para resaltar la fila en modo de edición */
+        tr.editing-row {
+            background-color: #fffbe6 !important;
+        }
 
-        /* Hacer que los inputs se vean bloqueados cuando están en readonly */
-        input:read-only, select:disabled {
-            background-color: #f8f9fa;
-            cursor: not-allowed;
-            border-color: #e9ecef;
-            color: #6c757d;
-        }
-    </style>
+        /* Hacer que los inputs se vean bloqueados cuando están en readonly */
+        input:read-only, select:disabled {
+            background-color: #f8f9fa;
+            cursor: not-allowed;
+            border-color: #e9ecef;
+            color: #6c757d;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📊 Hoja de Cálculo con Conversión de Monedas</h1>
-        
-        <div id="statusMessage" class="status-message"></div>
-        
-        <div class="exchange-rates">
-            <h3>💱 Tipos de Cambio</h3>
-            <div class="rates-grid">
-                <div class="rate-item">
-                    <span>1 USD =</span>
-                    <input type="number" id="usd-to-ars" class="rate-input" value="1330" step="0.01">
-                    <span>ARS</span>
-                </div>
-                <div class="rate-item">
-                    <span>1 USD =</span>
-                    <input type="number" id="usd-to-clp" class="rate-input" value="955" step="0.01">
-                    <span>CLP</span>
-                </div>
-            </div>
-        </div>
+    <div class="container">
+        <h1>📊 Hoja de Cálculo con Conversión de Monedas</h1>
+        
+        <div id="statusMessage" class="status-message"></div>
+        
+        <div class="exchange-rates">
+            <h3>💱 Tipos de Cambio</h3>
+            <div class="rates-grid">
+                <div class="rate-item">
+                    <span>1 USD =</span>
+                    <input type="number" id="usd-to-ars" class="rate-input" value="1330" step="0.01">
+                    <span>ARS</span>
+                </div>
+                <div class="rate-item">
+                    <span>1 USD =</span>
+                    <input type="number" id="usd-to-clp" class="rate-input" value="955" step="0.01">
+                    <span>CLP</span>
+                </div>
+            </div>
+        </div>
 
-        <div class="controls">
-            <div class="search-container">
-                <input type="text" id="searchInput" placeholder="Buscar producto...">
-            </div>
-            <div class="sort-options">
-                <button id="sortAscBtn" class="sort-btn">Precios: Menor a Mayor</button>
-                <button id="sortDescBtn" class="sort-btn">Precios: Mayor a Menor</button>
-            </div>
-        </div>
-        
-        <div class="table-container">
-            <table id="productTable">
-                <thead>
-                    <tr>
-                        <th data-column="nombre">Producto <span class="sort-icon"></span></th>
-                        <th>Estado</th>
-                        <th>Link</th>
-                        <th data-column="precio_usd">Precio USD ($) <span class="sort-icon"></span></th>
-                        <th data-column="precio_ars">Precio ARS ($) <span class="sort-icon"></span></th>
-                        <th data-column="precio_clp">Precio CLP ($) <span class="sort-icon"></span></th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                </tbody>
-            </table>
-        </div>
-        
-        <div class="btn-group">
-            <button class="add-row-btn" onclick="addRow()">➕ Agregar Fila</button>
-            <button class="save-btn" onclick="saveAllData()">💾 Guardar Todo</button>
-            <button class="load-btn" onclick="loadAllData()">📂 Cargar Datos</button>
-            <button class="export-btn" onclick="exportToCSV()">📥 Exportar CSV</button>
-        </div>
-    </div>
-    
-    <div id="loadingSpinner" class="spinner-overlay">
-        <div class="spinner"></div>
-    </div>
+        <div class="controls">
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Buscar producto...">
+            </div>
+            <div class="sort-options">
+                <button id="sortAscBtn" class="sort-btn">Precios: Menor a Mayor</button>
+                <button id="sortDescBtn" class="sort-btn">Precios: Mayor a Menor</button>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table id="productTable">
+                <thead>
+                    <tr>
+                        <th data-column="nombre">Producto <span class="sort-icon"></span></th>
+                        <th>Estado</th>
+                        <th>Link</th>
+                        <th data-column="precio_usd">Precio USD ($) <span class="sort-icon"></span></th>
+                        <th data-column="precio_ars">Precio ARS ($) <span class="sort-icon"></span></th>
+                        <th data-column="precio_clp">Precio CLP ($) <span class="sort-icon"></span></th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="btn-group">
+            <button class="add-row-btn" onclick="addRow()">➕ Agregar Fila</button>
+            <button class="save-btn" onclick="saveAllData()">💾 Guardar Todo</button>
+            <button class="load-btn" onclick="loadAllData()">📂 Cargar Datos</button>
+            <button class="export-btn" onclick="exportToCSV()">📥 Exportar CSV</button>
+        </div>
+    </div>
+    
+    <div id="loadingSpinner" class="spinner-overlay">
+        <div class="spinner"></div>
+    </div>
 
-    <script>
-        let isUpdating = false;
-        let productos = [];
-        let sortColumn = null;
-        let sortDirection = 'asc';
-        const API_BASE_URL = '/api';
+    <script>
+        let isUpdating = false;
+        let productos = [];
+        let sortColumn = null;
+        let sortDirection = 'asc';
+        const API_BASE_URL = '/api';
 
-        document.addEventListener('DOMContentLoaded', () => {
-            loadAllData();
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAllData();
 
-            document.getElementById('searchInput').addEventListener('input', (e) => {
-                searchProducts(e.target.value);
-            });
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                searchProducts(e.target.value);
+            });
 
-            document.querySelectorAll('th[data-column]').forEach(header => {
-                header.addEventListener('click', () => {
-                    sortTable(header.getAttribute('data-column'));
-                });
-            });
+            document.querySelectorAll('th[data-column]').forEach(header => {
+                header.addEventListener('click', () => {
+                    sortTable(header.getAttribute('data-column'));
+                });
+            });
 
-            document.getElementById('sortAscBtn').addEventListener('click', () => {
-                sortTable('precio_usd', 'asc');
-            });
+            document.getElementById('sortAscBtn').addEventListener('click', () => {
+                sortTable('precio_usd', 'asc');
+            });
 
-            document.getElementById('sortDescBtn').addEventListener('click', () => {
-                sortTable('precio_usd', 'desc');
-            });
-        });
+            document.getElementById('sortDescBtn').addEventListener('click', () => {
+                sortTable('precio_usd', 'desc');
+            });
+        });
 
-        function showMessage(message, type = 'info') {
-            const statusEl = document.getElementById('statusMessage');
-            statusEl.classList.remove('show', 'hidden', 'status-success', 'status-error', 'status-info');
-            statusEl.textContent = message;
-            statusEl.className = `status-message status-${type}`;
-            setTimeout(() => statusEl.classList.add('show'), 50);
-            setTimeout(() => statusEl.classList.add('hidden'), 4000);
-        }
+        function showMessage(message, type = 'info') {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.classList.remove('show', 'hidden', 'status-success', 'status-error', 'status-info');
+            statusEl.textContent = message;
+            statusEl.className = `status-message status-${type}`;
+            setTimeout(() => statusEl.classList.add('show'), 50);
+            setTimeout(() => statusEl.classList.add('hidden'), 4000);
+        }
 
-        function getRates() {
-            return {
-                usdToArs: parseFloat(document.getElementById('usd-to-ars').value) || 1330.92,
-                usdToClp: parseFloat(document.getElementById('usd-to-clp').value) || 955
-            };
-        }
+        function getRates() {
+            return {
+                usdToArs: parseFloat(document.getElementById('usd-to-ars').value) || 1330.92,
+                usdToClp: parseFloat(document.getElementById('usd-to-clp').value) || 955
+            };
+        }
 
-        function updateCurrencies(changedInput) {
-            if (isUpdating) return;
-            isUpdating = true;
-            
-            const row = changedInput.closest('tr');
-            if (!row.classList.contains('editing-row')) {
-                isUpdating = false;
-                return;
-            }
+        function updateCurrencies(changedInput) {
+            if (isUpdating) return;
+            isUpdating = true;
+            
+            const row = changedInput.closest('tr');
+            if (!row.classList.contains('editing-row')) {
+                isUpdating = false;
+                return;
+            }
 
-            const usdInput = row.querySelector('.usd-input');
-            const arsInput = row.querySelector('.ars-input');
-            const clpInput = row.querySelector('.clp-input');
-            
-            const rates = getRates();
-            const inputValue = parseFloat(changedInput.value) || 0;
-            
-            if (changedInput.value.trim() === '') {
-                isUpdating = false;
-                return;
-            }
+            const usdInput = row.querySelector('.usd-input');
+            const arsInput = row.querySelector('.ars-input');
+            const clpInput = row.querySelector('.clp-input');
+            
+            const rates = getRates();
+            const inputValue = parseFloat(changedInput.value) || 0;
+            
+            if (changedInput.value.trim() === '') {
+                isUpdating = false;
+                return;
+            }
 
-            if (inputValue >= 0) {
-                if (changedInput === usdInput) {
-                    arsInput.value = (inputValue * rates.usdToArs).toFixed(2);
-                    clpInput.value = (inputValue * rates.usdToClp).toFixed(2);
-                } else if (changedInput === arsInput) {
-                    const calculatedUsd = inputValue / rates.usdToArs;
-                    usdInput.value = calculatedUsd.toFixed(2);
-                    clpInput.value = (calculatedUsd * rates.usdToClp).toFixed(2);
-                } else if (changedInput === clpInput) {
-                    const calculatedUsd = inputValue / rates.usdToClp;
-                    usdInput.value = calculatedUsd.toFixed(2);
-                    arsInput.value = (calculatedUsd * rates.usdToArs).toFixed(2);
-                }
-            }
-            isUpdating = false;
-        }
+            if (inputValue >= 0) {
+                if (changedInput === usdInput) {
+                    arsInput.value = (inputValue * rates.usdToArs).toFixed(2);
+                    clpInput.value = (inputValue * rates.usdToClp).toFixed(2);
+                } else if (changedInput === arsInput) {
+                    const calculatedUsd = inputValue / rates.usdToArs;
+                    usdInput.value = calculatedUsd.toFixed(2);
+                    clpInput.value = (calculatedUsd * rates.usdToClp).toFixed(2);
+                } else if (changedInput === clpInput) {
+                    const calculatedUsd = inputValue / rates.usdToClp;
+                    usdInput.value = calculatedUsd.toFixed(2);
+                    arsInput.value = (calculatedUsd * rates.usdToArs).toFixed(2);
+                }
+            }
+            isUpdating = false;
+        }
 
-        function createNewRow(producto = {}, isNew = false) {
-            const tableBody = document.getElementById('tableBody');
-            const newRow = document.createElement('tr');
-            
-            newRow.innerHTML = `
-                <td><input type="text" placeholder="Nombre del producto" value="${producto.nombre || ''}" readonly></td>
-                <td>
-                    <select disabled>
-                        <option value="">Seleccionar</option>
-                        <option value="nuevo" ${producto.estado === 'nuevo' ? 'selected' : ''}>Nuevo</option>
-                        <option value="usado" ${producto.estado === 'usado' ? 'selected' : ''}>Usado</option>
-                    </select>
-                </td>
-                <td class="link-cell">
-                    <input type="text" class="link-input" placeholder="https://..." value="${producto.link || ''}" readonly>
-                    <button class="open-link-btn">🔗 Abrir</button>
-                </td>
-                <td class="currency-cell">
-                    <span class="currency-symbol">$</span>
-                    <input type="number" class="usd-input" step="0.01" placeholder="0.00" value="${producto.precio_usd || ''}" readonly>
-                </td>
-                <td class="currency-cell">
-                    <span class="currency-symbol">$</span>
-                    <input type="number" class="ars-input" step="0.01" placeholder="0.00" value="${producto.precio_ars || ''}" readonly>
-                </td>
-                <td class="currency-cell">
-                    <span class="currency-symbol">$</span>
-                    <input type="number" class="clp-input" step="0.01" placeholder="0.00" value="${producto.precio_clp || ''}" readonly>
-                </td>
-                <td>
-                    <button class="edit-btn" onclick="editRow(this)">📝 Editar</button>
-                    <button class="save-row-btn" onclick="saveRow(this)" style="display:none;">💾 Guardar</button>
-                    <button class="delete-btn" onclick="deleteRow(this)">🗑️ Eliminar</button>
-                </td>
-            `;
-            
-            if (producto.id) {
-                newRow.setAttribute('data-id', producto.id);
-            }
-            
-            tableBody.appendChild(newRow);
-            attachEventListeners(newRow);
-            
-            if (isNew) {
-                editRow(newRow.querySelector('.edit-btn'));
-            }
-            
-            return newRow;
-        }
+        function createNewRow(producto = {}, isNew = false) {
+            const tableBody = document.getElementById('tableBody');
+            const newRow = document.createElement('tr');
+            
+            newRow.innerHTML = `
+                <td><input type="text" placeholder="Nombre del producto" value="${producto.nombre || ''}" readonly></td>
+                <td>
+                    <select disabled>
+                        <option value="">Seleccionar</option>
+                        <option value="nuevo" ${producto.estado === 'nuevo' ? 'selected' : ''}>Nuevo</option>
+                        <option value="usado" ${producto.estado === 'usado' ? 'selected' : ''}>Usado</option>
+                    </select>
+                </td>
+                <td class="link-cell">
+                    <input type="text" class="link-input" placeholder="https://..." value="${producto.link || ''}" readonly>
+                    <button class="open-link-btn">🔗 Abrir</button>
+                </td>
+                <td class="currency-cell">
+                    <span class="currency-symbol">$</span>
+                    <input type="number" class="usd-input" step="0.01" placeholder="0.00" value="${producto.precio_usd || ''}" readonly>
+                </td>
+                <td class="currency-cell">
+                    <span class="currency-symbol">$</span>
+                    <input type="number" class="ars-input" step="0.01" placeholder="0.00" value="${producto.precio_ars || ''}" readonly>
+                </td>
+                <td class="currency-cell">
+                    <span class="currency-symbol">$</span>
+                    <input type="number" class="clp-input" step="0.01" placeholder="0.00" value="${producto.precio_clp || ''}" readonly>
+                </td>
+                <td>
+                    <button class="edit-btn" onclick="editRow(this)">📝 Editar</button>
+                    <button class="save-row-btn" onclick="saveRow(this)" style="display:none;">💾 Guardar</button>
+                    <button class="delete-btn" onclick="deleteRow(this)">🗑️ Eliminar</button>
+                </td>
+            `;
+            
+            if (producto.id) {
+                newRow.setAttribute('data-id', producto.id);
+            }
+            
+            tableBody.appendChild(newRow);
+            attachEventListeners(newRow);
+            
+            if (isNew) {
+                editRow(newRow.querySelector('.edit-btn'));
+            }
+            
+            return newRow;
+        }
 
-        function addRow() {
-            createNewRow({}, true);
-        }
+        function addRow() {
+            createNewRow({}, true);
+        }
 
-        function editRow(button) {
-            const row = button.closest('tr');
-            row.classList.add('editing-row');
-            
-            row.querySelectorAll('input, select').forEach(el => {
-                el.readOnly = false;
-                el.disabled = false;
-            });
+        function editRow(button) {
+            const row = button.closest('tr');
+            row.classList.add('editing-row');
+            
+            row.querySelectorAll('input, select').forEach(el => {
+                el.readOnly = false;
+                el.disabled = false;
+            });
 
-            attachEventListeners(row);
+            attachEventListeners(row);
 
-            row.querySelector('.edit-btn').style.display = 'none';
-            row.querySelector('.save-row-btn').style.display = 'inline-block';
-            row.querySelector('input[type="text"]').focus();
-        }
+            row.querySelector('.edit-btn').style.display = 'none';
+            row.querySelector('.save-row-btn').style.display = 'inline-block';
+            row.querySelector('input[type="text"]').focus();
+        }
 
-        async function saveRow(button) {
-            const row = button.closest('tr');
-            const rowData = getRowData(row);
-            
-            if (!rowData.nombre || rowData.nombre.trim() === '') {
-                showMessage('El nombre del producto no puede estar vacío.', 'error');
-                row.querySelector('input[type="text"]').focus();
-                return;
-            }
+        // *** FUNCIÓN saveRow CORREGIDA ***
+        async function saveRow(button) {
+            const row = button.closest('tr');
+            const rowData = getRowData(row);
+            
+            if (!rowData.nombre || rowData.nombre.trim() === '') {
+                showMessage('El nombre del producto no puede estar vacío.', 'error');
+                row.querySelector('input[type="text"]').focus();
+                return;
+            }
 
-            const spinnerEl = document.getElementById('loadingSpinner');
-            spinnerEl.classList.add('show');
-            
-            try {
-                const productId = row.getAttribute('data-id');
-                let response;
-                
-                if (productId) {
-                    response = await fetch(`${API_BASE_URL}/productos/${productId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(rowData)
-                    });
-                } else {
-                    response = await fetch(`${API_BASE_URL}/productos`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(rowData)
-                    });
-                }
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Error al guardar el producto.');
-                }
-                
-                const savedProduct = await response.json();
-                row.setAttribute('data-id', savedProduct.id);
-                
-                row.classList.remove('editing-row');
-                row.querySelectorAll('input, select').forEach(el => {
-                    if (el.tagName === 'SELECT') el.disabled = true;
-                    else el.readOnly = true;
-                });
-                
-                row.querySelector('.edit-btn').style.display = 'inline-block';
-                row.querySelector('.save-row-btn').style.display = 'none';
+            const spinnerEl = document.getElementById('loadingSpinner');
+            spinnerEl.classList.add('show');
+            
+            try {
+                // Se obtiene el ID para saber si es una fila nueva o existente.
+                const productId = row.getAttribute('data-id');
+                let response;
+                
+                if (productId) {
+                    // Si hay un ID, se realiza una petición PUT para actualizar.
+                    response = await fetch(`${API_BASE_URL}/productos/${productId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(rowData)
+                    });
+                } else {
+                    // Si NO hay un ID, es un producto nuevo. Se realiza una petición POST.
+                    response = await fetch(`${API_BASE_URL}/productos`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(rowData)
+                    });
+                }
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Error al guardar el producto.');
+                }
+                
+                const savedProduct = await response.json();
+                // Aquí se actualiza el ID en la fila, lo que permite que futuras ediciones
+                // de esta misma fila utilicen la petición PUT.
+                row.setAttribute('data-id', savedProduct.id);
+                
+                row.classList.remove('editing-row');
+                row.querySelectorAll('input, select').forEach(el => {
+                    if (el.tagName === 'SELECT') el.disabled = true;
+                    else el.readOnly = true;
+                });
+                
+                row.querySelector('.edit-btn').style.display = 'inline-block';
+                row.querySelector('.save-row-btn').style.display = 'none';
 
-                showMessage('Producto guardado exitosamente.', 'success');
-                
-            } catch (error) {
-                console.error('Error:', error);
-                showMessage(error.message, 'error');
-            } finally {
-                spinnerEl.classList.remove('show');
-            }
-        }
-        
-        function attachEventListeners(row) {
-            row.querySelectorAll('.usd-input, .ars-input, .clp-input').forEach(input => {
-                input.addEventListener('input', function() { updateCurrencies(this); });
-            });
+                showMessage('Producto guardado exitosamente.', 'success');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage(error.message, 'error');
+            } finally {
+                spinnerEl.classList.remove('show');
+            }
+        }
+        
+        function attachEventListeners(row) {
+            row.querySelectorAll('.usd-input, .ars-input, .clp-input').forEach(input => {
+                input.addEventListener('input', function() { updateCurrencies(this); });
+            });
 
-            const linkInput = row.querySelector('.link-input');
-            const openLinkBtn = row.querySelector('.open-link-btn');
+            const linkInput = row.querySelector('.link-input');
+            const openLinkBtn = row.querySelector('.open-link-btn');
 
-            const updateButtonState = () => {
-                openLinkBtn.disabled = !linkInput.value.trim();
-            };
+            const updateButtonState = () => {
+                openLinkBtn.disabled = !linkInput.value.trim();
+            };
 
-            linkInput.addEventListener('input', updateButtonState);
-            
-            openLinkBtn.addEventListener('click', () => {
-                const url = linkInput.value.trim();
-                if (url) {
-                    let fullUrl = url.startsWith('http') ? url : 'https://' + url;
-                    window.open(fullUrl, '_blank');
-                }
-            });
+            linkInput.addEventListener('input', updateButtonState);
+            
+            openLinkBtn.addEventListener('click', () => {
+                const url = linkInput.value.trim();
+                if (url) {
+                    let fullUrl = url.startsWith('http') ? url : 'https://' + url;
+                    window.open(fullUrl, '_blank');
+                }
+            });
 
-            updateButtonState();
-        }
+            updateButtonState();
+        }
 
-        function getRowData(row) {
-            const inputs = row.querySelectorAll('input, select');
-            return {
-                nombre: inputs[0].value || null,
-                estado: inputs[1].value || null,
-                link: inputs[2].value || null,
-                precio_usd: parseFloat(inputs[4].value) || null,
-                precio_ars: parseFloat(inputs[5].value) || null,
-                precio_clp: parseFloat(inputs[6].value) || null,
-                id: row.getAttribute('data-id') || null
-            };
-        }
+        function getRowData(row) {
+            const inputs = row.querySelectorAll('input, select');
+            return {
+                nombre: inputs[0].value || null,
+                estado: inputs[1].value || null,
+                link: inputs[2].value || null,
+                precio_usd: parseFloat(inputs[4].value) || null,
+                precio_ars: parseFloat(inputs[5].value) || null,
+                precio_clp: parseFloat(inputs[6].value) || null,
+                id: row.getAttribute('data-id') || null
+            };
+        }
 
-        async function saveAllData() {
-            if (!confirm('Esto intentará guardar TODAS las filas en modo de edición. ¿Desea continuar?')) {
-                return;
-            }
-            const editingRows = document.querySelectorAll('#tableBody tr.editing-row');
-            if (editingRows.length === 0) {
-                showMessage('No hay filas en modo de edición para guardar.', 'info');
-                return;
-            }
-            for (let row of editingRows) {
-                await saveRow(row.querySelector('.save-row-btn'));
-            }
-        }
-        
-        async function loadAllData() {
-            const spinnerEl = document.getElementById('loadingSpinner');
-            try {
-                spinnerEl.classList.add('show');
-                showMessage('Cargando productos...', 'info');
-                const response = await fetch(`${API_BASE_URL}/productos`);
-                if (!response.ok) throw new Error('Error al cargar productos');
-                productos = await response.json();
-                document.getElementById('tableBody').innerHTML = '';
-                if (productos.length > 0) {
-                    productos.forEach(producto => createNewRow(producto));
-                    showMessage(`${productos.length} productos cargados.`, 'success');
-                } else {
-                    addRow();
-                    showMessage('No hay productos guardados. Se creó una fila nueva.', 'info');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showMessage('Error al cargar productos.', 'error');
-                addRow();
-            } finally {
-                spinnerEl.classList.remove('show');
-            }
-        }
+        async function saveAllData() {
+            if (!confirm('Esto intentará guardar TODAS las filas en modo de edición. ¿Desea continuar?')) {
+                return;
+            }
+            const editingRows = document.querySelectorAll('#tableBody tr.editing-row');
+            if (editingRows.length === 0) {
+                showMessage('No hay filas en modo de edición para guardar.', 'info');
+                return;
+            }
+            for (let row of editingRows) {
+                await saveRow(row.querySelector('.save-row-btn'));
+            }
+        }
+        
+        async function loadAllData() {
+            const spinnerEl = document.getElementById('loadingSpinner');
+            try {
+                spinnerEl.classList.add('show');
+                showMessage('Cargando productos...', 'info');
+                const response = await fetch(`${API_BASE_URL}/productos`);
+                if (!response.ok) throw new Error('Error al cargar productos');
+                productos = await response.json();
+                document.getElementById('tableBody').innerHTML = '';
+                if (productos.length > 0) {
+                    productos.forEach(producto => createNewRow(producto));
+                    showMessage(`${productos.length} productos cargados.`, 'success');
+                } else {
+                    addRow();
+                    showMessage('No hay productos guardados. Se creó una fila nueva.', 'info');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Error al cargar productos.', 'error');
+                addRow();
+            } finally {
+                spinnerEl.classList.remove('show');
+            }
+        }
 
-        function deleteRow(button) {
-            const row = button.closest('tr');
-            const productId = row.getAttribute('data-id');
-            const productName = row.querySelector('input[type="text"]').value || "este producto";
-            const message = productId
-                ? `¿Estás seguro de que quieres eliminar "${productName}" de la base de datos?`
-                : `¿Estás seguro de que quieres descartar esta fila?`;
-            if (confirm(message)) {
-                if (productId) {
-                    deleteProductFromDB(productId, row);
-                } else {
-                    row.remove();
-                }
-            }
-        }
-        
-        async function deleteProductFromDB(productId, row) {
-            try {
-                const response = await fetch(`${API_BASE_URL}/productos/${productId}`, { method: 'DELETE' });
-                if (response.ok) {
-                    row.remove();
-                    showMessage('Producto eliminado exitosamente', 'success');
-                    productos = productos.filter(p => p.id != productId);
-                } else {
-                    throw new Error('Error al eliminar producto');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showMessage('Error al eliminar producto', 'error');
-            }
-        }
+        function deleteRow(button) {
+            const row = button.closest('tr');
+            const productId = row.getAttribute('data-id');
+            const productName = row.querySelector('input[type="text"]').value || "este producto";
+            const message = productId
+                ? `¿Estás seguro de que quieres eliminar "${productName}" de la base de datos?`
+                : `¿Estás seguro de que quieres descartar esta fila?`;
+            if (confirm(message)) {
+                if (productId) {
+                    deleteProductFromDB(productId, row);
+                } else {
+                    row.remove();
+                }
+            }
+        }
+        
+        async function deleteProductFromDB(productId, row) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/productos/${productId}`, { method: 'DELETE' });
+                if (response.ok) {
+                    row.remove();
+                    showMessage('Producto eliminado exitosamente', 'success');
+                    productos = productos.filter(p => p.id != productId);
+                } else {
+                    throw new Error('Error al eliminar producto');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('Error al eliminar producto', 'error');
+            }
+        }
 
-        function exportToCSV() {
-            let csv = [['Producto', 'Estado', 'Link', 'Precio USD', 'Precio ARS', 'Precio CLP'].join(',')];
-            document.querySelectorAll('#tableBody tr').forEach(row => {
-                const data = getRowData(row);
-                if (data.nombre) {
-                    const csvRow = [
-                        `"${(data.nombre || '').replace(/"/g, '""')}"`,
-                        `"${(data.estado || '').replace(/"/g, '""')}"`,
-                        `"${(data.link || '').replace(/"/g, '""')}"`,
-                        data.precio_usd || 0,
-                        data.precio_ars || 0,
-                        data.precio_clp || 0
-                    ].join(',');
-                    csv.push(csvRow);
-                }
-            });
-            const csvContent = csv.join('\n');
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.setAttribute('download', 'productos.csv');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
+        function exportToCSV() {
+            let csv = [['Producto', 'Estado', 'Link', 'Precio USD', 'Precio ARS', 'Precio CLP'].join(',')];
+            document.querySelectorAll('#tableBody tr').forEach(row => {
+                const data = getRowData(row);
+                if (data.nombre) {
+                    const csvRow = [
+                        `"${(data.nombre || '').replace(/"/g, '""')}"`,
+                        `"${(data.estado || '').replace(/"/g, '""')}"`,
+                        `"${(data.link || '').replace(/"/g, '""')}"`,
+                        data.precio_usd || 0,
+                        data.precio_ars || 0,
+                        data.precio_clp || 0
+                    ].join(',');
+                    csv.push(csvRow);
+                }
+            });
+            const csvContent = csv.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute('download', 'productos.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
 
-        function searchProducts(searchTerm) {
-            const term = searchTerm.toLowerCase();
-            document.querySelectorAll('#tableBody tr').forEach(row => {
-                const productName = row.querySelector('input[type="text"]').value.toLowerCase();
-                row.style.display = productName.includes(term) ? '' : 'none';
-            });
-        }
+        function searchProducts(searchTerm) {
+            const term = searchTerm.toLowerCase();
+            document.querySelectorAll('#tableBody tr').forEach(row => {
+                const productName = row.querySelector('input[type="text"]').value.toLowerCase();
+                row.style.display = productName.includes(term) ? '' : 'none';
+            });
+        }
 
-        function sortTable(column, direction = null) {
-            const tableBody = document.getElementById('tableBody');
-            const rows = Array.from(tableBody.querySelectorAll('tr'));
-            
-            if (direction) {
-                sortDirection = direction;
-            } else if (sortColumn === column) {
-                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-            } else {
-                sortColumn = column;
-                sortDirection = 'asc';
-            }
+        function sortTable(column, direction = null) {
+            const tableBody = document.getElementById('tableBody');
+            const rows = Array.from(tableBody.querySelectorAll('tr'));
+            
+            if (direction) {
+                sortDirection = direction;
+            } else if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
 
-            document.querySelectorAll('th[data-column]').forEach(header => {
-                header.classList.remove('asc', 'desc');
-                if (header.getAttribute('data-column') === sortColumn) {
-                    header.classList.add(sortDirection);
-                }
-            });
+            document.querySelectorAll('th[data-column]').forEach(header => {
+                header.classList.remove('asc', 'desc');
+                if (header.getAttribute('data-column') === sortColumn) {
+                    header.classList.add(sortDirection);
+                }
+            });
 
-            rows.sort((a, b) => {
-                const rowAData = getRowData(a);
-                const rowBData = getRowData(b);
-                let aValue = rowAData[column] || (column === 'nombre' ? '' : 0);
-                let bValue = rowBData[column] || (column === 'nombre' ? '' : 0);
+            rows.sort((a, b) => {
+                const rowAData = getRowData(a);
+                const rowBData = getRowData(b);
+                let aValue = rowAData[column] || (column === 'nombre' ? '' : 0);
+                let bValue = rowBData[column] || (column === 'nombre' ? '' : 0);
 
-                if (typeof aValue === 'string') {
-                    aValue = aValue.toLowerCase();
-                    bValue = bValue.toLowerCase();
-                }
+                if (typeof aValue === 'string') {
+                    aValue = aValue.toLowerCase();
+                    bValue = bValue.toLowerCase();
+                }
 
-                if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-                if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-                return 0;
-            });
-            
-            rows.forEach(row => tableBody.appendChild(row));
-        }
-    </script>
+                if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+                if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+            
+            rows.forEach(row => tableBody.appendChild(row));
+        }
+    </script>
 </body>
 </html>
