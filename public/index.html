@@ -417,6 +417,35 @@
             color: #0c5460;
             border: 1px solid #bee5eb;
         }
+        
+        /* --- NUEVO: Estilos para la celda del link y el botón --- */
+        .link-cell {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .link-cell input {
+            flex-grow: 1; /* El input ocupa el espacio disponible */
+        }
+        .open-link-btn {
+            background-color: #17a2b8;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            flex-shrink: 0; /* Evita que el botón se encoja */
+            white-space: nowrap; /* Evita que el texto del botón se parta */
+        }
+        .open-link-btn:hover {
+            background-color: #138496;
+        }
+        .open-link-btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body>
@@ -562,6 +591,7 @@
             const tableBody = document.getElementById('tableBody');
             const newRow = document.createElement('tr');
             
+            // MODIFICADO: Se cambia la celda del link para incluir un input y un botón.
             newRow.innerHTML = `
                 <td><input type="text" placeholder="Nombre del producto" value="${producto.nombre || ''}"></td>
                 <td>
@@ -571,7 +601,10 @@
                         <option value="usado" ${producto.estado === 'usado' ? 'selected' : ''}>Usado</option>
                     </select>
                 </td>
-                <td><input type="text" placeholder="https://..." value="${producto.link || ''}"></td>
+                <td class="link-cell">
+                    <input type="text" class="link-input" placeholder="https://..." value="${producto.link || ''}">
+                    <button class="open-link-btn">🔗 Abrir</button>
+                </td>
                 <td class="currency-cell">
                     <span class="currency-symbol">$</span>
                     <input type="number" class="usd-input" step="0.01" placeholder="0.00" value="${producto.precio_usd || ''}">
@@ -638,14 +671,44 @@
                 showMessage('Error al eliminar producto', 'error');
             }
         }
-
+        
+        // MODIFICADO: Se añade la lógica para el botón de abrir link.
         function attachEventListeners(row) {
+            // Lógica para los inputs de moneda
             const currencyInputs = row.querySelectorAll('.usd-input, .ars-input, .clp-input');
             currencyInputs.forEach(input => {
                 input.addEventListener('input', function() {
                     updateCurrencies(this);
                 });
             });
+
+            // --- NUEVO: Lógica para el botón de abrir link ---
+            const linkInput = row.querySelector('.link-input');
+            const openLinkBtn = row.querySelector('.open-link-btn');
+
+            // Función para actualizar el estado del botón (habilitado/deshabilitado)
+            const updateButtonState = () => {
+                openLinkBtn.disabled = !linkInput.value.trim();
+            };
+
+            // Añadir detector de eventos al input del link
+            linkInput.addEventListener('input', updateButtonState);
+            
+            // Añadir detector de eventos al botón de abrir
+            openLinkBtn.addEventListener('click', () => {
+                const url = linkInput.value.trim();
+                if (url) {
+                    let fullUrl = url;
+                    // Añadir https:// si no está presente para asegurar que el link funcione
+                    if (!/^https?:\/\//i.test(fullUrl)) {
+                        fullUrl = 'https://' + fullUrl;
+                    }
+                    window.open(fullUrl, '_blank');
+                }
+            });
+
+            // Establecer el estado inicial del botón al cargar la fila
+            updateButtonState();
         }
 
         function getRowData(row) {
@@ -868,11 +931,11 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Event listeners para actualizar tipos de cambio
             document.getElementById('usd-to-ars').addEventListener('input', function() {
-                 // Aquí puedes agregar la lógica para recalcular todas las filas
+               // Aquí puedes agregar la lógica para recalcular todas las filas
             });
             
             document.getElementById('usd-to-clp').addEventListener('input', function() {
-                 // Aquí puedes agregar la lógica para recalcular todas las filas
+               // Aquí puedes agregar la lógica para recalcular todas las filas
             });
 
             // Event listener para la búsqueda
