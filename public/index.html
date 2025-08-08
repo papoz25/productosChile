@@ -198,6 +198,21 @@
             display: flex;
             gap: 10px;
         }
+
+        .sort-btn {
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+        
+        .sort-btn:hover {
+            background-color: #0b7dda;
+        }
         
         table {
             width: 100%;
@@ -211,7 +226,7 @@
             padding: 12px;
             text-align: left;
             font-weight: bold;
-            cursor: pointer; /* Cursor de puntero para indicar que se puede hacer clic */
+            cursor: pointer;
             position: relative;
         }
 
@@ -235,7 +250,7 @@
         td {
             padding: 10px;
             border-bottom: 1px solid #ddd;
-            vertical-align: middle; /* Alinea verticalmente el contenido de las celdas */
+            vertical-align: middle;
         }
         
         tr:nth-child(even) {
@@ -457,7 +472,7 @@
             border-radius: 3px;
             cursor: pointer;
             font-size: 12px;
-            margin-right: 5px; /* Espacio entre botones */
+            margin-right: 5px;
         }
 
         .edit-btn:hover, .save-row-btn:hover {
@@ -465,7 +480,7 @@
         }
 
         .save-row-btn {
-            background-color: #28a745; /* Verde para guardar */
+            background-color: #28a745;
         }
 
         .save-row-btn:hover {
@@ -474,7 +489,7 @@
 
         /* Estilo para resaltar la fila en modo de edición */
         tr.editing-row {
-            background-color: #fffbe6 !important; /* Un amarillo claro para destacar */
+            background-color: #fffbe6 !important;
         }
 
         /* Hacer que los inputs se vean bloqueados cuando están en readonly */
@@ -511,6 +526,10 @@
         <div class="controls">
             <div class="search-container">
                 <input type="text" id="searchInput" placeholder="Buscar producto...">
+            </div>
+            <div class="sort-options">
+                <button id="sortAscBtn" class="sort-btn">Precios: Menor a Mayor</button>
+                <button id="sortDescBtn" class="sort-btn">Precios: Mayor a Menor</button>
             </div>
         </div>
         
@@ -563,6 +582,14 @@
                     sortTable(header.getAttribute('data-column'));
                 });
             });
+
+            document.getElementById('sortAscBtn').addEventListener('click', () => {
+                sortTable('precio_usd', 'asc');
+            });
+
+            document.getElementById('sortDescBtn').addEventListener('click', () => {
+                sortTable('precio_usd', 'desc');
+            });
         });
 
         function showMessage(message, type = 'info') {
@@ -599,8 +626,8 @@
             const inputValue = parseFloat(changedInput.value) || 0;
             
             if (changedInput.value.trim() === '') {
-                 isUpdating = false;
-                 return;
+                isUpdating = false;
+                return;
             }
 
             if (inputValue >= 0) {
@@ -829,7 +856,7 @@
             const row = button.closest('tr');
             const productId = row.getAttribute('data-id');
             const productName = row.querySelector('input[type="text"]').value || "este producto";
-            const message = productId 
+            const message = productId
                 ? `¿Estás seguro de que quieres eliminar "${productName}" de la base de datos?`
                 : `¿Estás seguro de que quieres descartar esta fila?`;
             if (confirm(message)) {
@@ -891,34 +918,42 @@
             });
         }
 
-        function sortTable(column) {
+        function sortTable(column, direction = null) {
             const tableBody = document.getElementById('tableBody');
             const rows = Array.from(tableBody.querySelectorAll('tr'));
-            if (sortColumn === column) {
+            
+            if (direction) {
+                sortDirection = direction;
+            } else if (sortColumn === column) {
                 sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
             } else {
                 sortColumn = column;
                 sortDirection = 'asc';
             }
+
             document.querySelectorAll('th[data-column]').forEach(header => {
                 header.classList.remove('asc', 'desc');
                 if (header.getAttribute('data-column') === sortColumn) {
                     header.classList.add(sortDirection);
                 }
             });
+
             rows.sort((a, b) => {
                 const rowAData = getRowData(a);
                 const rowBData = getRowData(b);
                 let aValue = rowAData[column] || (column === 'nombre' ? '' : 0);
                 let bValue = rowBData[column] || (column === 'nombre' ? '' : 0);
+
                 if (typeof aValue === 'string') {
                     aValue = aValue.toLowerCase();
                     bValue = bValue.toLowerCase();
                 }
+
                 if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
                 if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
                 return 0;
             });
+            
             rows.forEach(row => tableBody.appendChild(row));
         }
     </script>
