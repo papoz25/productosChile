@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-ar">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hoja de Cálculo con Conversión de Monedas</title>
     <style>
@@ -551,202 +551,13 @@
         let sortDirection = 'asc';
         const API_BASE_URL = '/api';
 
-        // ... (resto de las funciones de utilidad como showMessage, getRates, updateCurrencies) ...
-        // NOTA: Estas funciones no cambian, por lo que las omito aquí por brevedad,
-        // pero deben estar en tu script. El código completo al final las incluye.
-        
-        // --- INICIO DE CAMBIOS PRINCIPALES ---
-
-        /**
-         * Crea una nueva fila en la tabla.
-         * @param {object} producto - Datos del producto para poblar la fila.
-         * @param {boolean} isNew - Si es true, la fila se crea en modo de edición.
-         */
-        function createNewRow(producto = {}, isNew = false) {
-            const tableBody = document.getElementById('tableBody');
-            const newRow = document.createElement('tr');
-            
-            // Los campos input ahora incluyen 'readonly' y el select 'disabled' por defecto.
-            newRow.innerHTML = `
-                <td><input type="text" placeholder="Nombre del producto" value="${producto.nombre || ''}" readonly></td>
-                <td>
-                    <select disabled>
-                        <option value="">Seleccionar</option>
-                        <option value="nuevo" ${producto.estado === 'nuevo' ? 'selected' : ''}>Nuevo</option>
-                        <option value="usado" ${producto.estado === 'usado' ? 'selected' : ''}>Usado</option>
-                    </select>
-                </td>
-                <td class="link-cell">
-                    <input type="text" class="link-input" placeholder="https://..." value="${producto.link || ''}" readonly>
-                    <button class="open-link-btn" disabled>🔗 Abrir</button>
-                </td>
-                <td class="currency-cell">
-                    <span class="currency-symbol">$</span>
-                    <input type="number" class="usd-input" step="0.01" placeholder="0.00" value="${producto.precio_usd || ''}" readonly>
-                </td>
-                <td class="currency-cell">
-                    <span class="currency-symbol">$</span>
-                    <input type="number" class="ars-input" step="0.01" placeholder="0.00" value="${producto.precio_ars || ''}" readonly>
-                </td>
-                <td class="currency-cell">
-                    <span class="currency-symbol">$</span>
-                    <input type="number" class="clp-input" step="0.01" placeholder="0.00" value="${producto.precio_clp || ''}" readonly>
-                </td>
-                <td>
-                    <button class="edit-btn" onclick="editRow(this)">📝 Editar</button>
-                    <button class="save-row-btn" onclick="saveRow(this)" style="display:none;">💾 Guardar</button>
-                    <button class="delete-btn" onclick="deleteRow(this)">🗑️ Eliminar</button>
-                </td>
-            `;
-            
-            if (producto.id) {
-                newRow.setAttribute('data-id', producto.id);
-            }
-            
-            tableBody.appendChild(newRow);
-            attachEventListeners(newRow);
-            
-            // Si es una fila nueva, la ponemos en modo edición automáticamente.
-            if (isNew) {
-                editRow(newRow.querySelector('.edit-btn'));
-            }
-            
-            return newRow;
-        }
-
-        /**
-         * Añade una nueva fila y la pone en modo de edición.
-         */
-        function addRow() {
-            createNewRow({}, true); // true para indicar que es una fila nueva
-        }
-
-        /**
-         * Activa el modo de edición para una fila específica.
-         * @param {HTMLElement} button - El botón 'Editar' que fue presionado.
-         */
-        function editRow(button) {
-            const row = button.closest('tr');
-            row.classList.add('editing-row');
-            
-            // Habilita todos los inputs y selects de la fila
-            row.querySelectorAll('input, select').forEach(el => {
-                el.readOnly = false;
-                el.disabled = false;
-            });
-
-            // Actualiza el estado del botón de abrir link
-            attachEventListeners(row);
-
-            // Alterna la visibilidad de los botones Editar/Guardar
-            row.querySelector('.edit-btn').style.display = 'none';
-            row.querySelector('.save-row-btn').style.display = 'inline-block';
-
-            // Pone el foco en el primer campo para una mejor UX
-            row.querySelector('input[type="text"]').focus();
-        }
-
-        /**
-         * Guarda los datos de una fila específica.
-         * @param {HTMLElement} button - El botón 'Guardar' que fue presionado.
-         */
-        async function saveRow(button) {
-            const row = button.closest('tr');
-            const rowData = getRowData(row);
-            
-            if (!rowData.nombre || rowData.nombre.trim() === '') {
-                showMessage('El nombre del producto no puede estar vacío.', 'error');
-                row.querySelector('input[type="text"]').focus();
-                return;
-            }
-
-            const spinnerEl = document.getElementById('loadingSpinner');
-            spinnerEl.classList.add('show');
-            
-            try {
-                const productId = row.getAttribute('data-id');
-                let response;
-                
-                if (productId) { // Actualizar producto existente (PUT)
-                    response = await fetch(`${API_BASE_URL}/productos/${productId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(rowData)
-                    });
-                } else { // Crear nuevo producto (POST)
-                    response = await fetch(`${API_BASE_URL}/productos`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(rowData)
-                    });
-                }
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Error al guardar el producto.');
-                }
-                
-                const savedProduct = await response.json();
-                row.setAttribute('data-id', savedProduct.id); // Asigna el ID si es un producto nuevo
-                
-                // Salir del modo de edición
-                row.classList.remove('editing-row');
-                row.querySelectorAll('input, select').forEach(el => {
-                    if (el.tagName === 'SELECT') el.disabled = true;
-                    else el.readOnly = true;
-                });
-
-                 // El botón "Abrir" del link se deshabilita también
-                row.querySelector('.open-link-btn').disabled = true;
-                
-                row.querySelector('.edit-btn').style.display = 'inline-block';
-                row.querySelector('.save-row-btn').style.display = 'none';
-
-                showMessage('Producto guardado exitosamente.', 'success');
-                
-            } catch (error) {
-                console.error('Error:', error);
-                showMessage(error.message, 'error');
-            } finally {
-                spinnerEl.classList.remove('show');
-            }
-        }
-        
-        /**
-         * Elimina una fila y, si corresponde, el producto de la DB.
-         */
-        function deleteRow(button) {
-            const row = button.closest('tr');
-            const productId = row.getAttribute('data-id');
-            const productName = row.querySelector('input[type="text"]').value || "este producto";
-            
-            const message = productId 
-                ? `¿Estás seguro de que quieres eliminar "${productName}" de la base de datos?`
-                : `¿Estás seguro de que quieres descartar esta fila?`;
-
-            if (confirm(message)) {
-                if (productId) {
-                    deleteProductFromDB(productId, row);
-                } else {
-                    row.remove();
-                }
-            }
-        }
-
-        // --- FIN DE CAMBIOS PRINCIPALES ---
-        
-        // El resto de funciones (getRates, updateCurrencies, showMessage, etc.) permanecen igual.
-        // A continuación se incluye el script completo para que sea fácil de copiar.
-
         document.addEventListener('DOMContentLoaded', () => {
-            loadAllData(); // Cargar datos al iniciar
+            loadAllData();
 
-            // Event listener para búsqueda
             document.getElementById('searchInput').addEventListener('input', (e) => {
                 searchProducts(e.target.value);
             });
 
-            // Event listeners para ordenación en cabeceras
             document.querySelectorAll('th[data-column]').forEach(header => {
                 header.addEventListener('click', () => {
                     sortTable(header.getAttribute('data-column'));
@@ -777,7 +588,7 @@
             const row = changedInput.closest('tr');
             if (!row.classList.contains('editing-row')) {
                 isUpdating = false;
-                return; // No calcular si la fila no está en modo edición
+                return;
             }
 
             const usdInput = row.querySelector('.usd-input');
@@ -809,6 +620,134 @@
             isUpdating = false;
         }
 
+        function createNewRow(producto = {}, isNew = false) {
+            const tableBody = document.getElementById('tableBody');
+            const newRow = document.createElement('tr');
+            
+            newRow.innerHTML = `
+                <td><input type="text" placeholder="Nombre del producto" value="${producto.nombre || ''}" readonly></td>
+                <td>
+                    <select disabled>
+                        <option value="">Seleccionar</option>
+                        <option value="nuevo" ${producto.estado === 'nuevo' ? 'selected' : ''}>Nuevo</option>
+                        <option value="usado" ${producto.estado === 'usado' ? 'selected' : ''}>Usado</option>
+                    </select>
+                </td>
+                <td class="link-cell">
+                    <input type="text" class="link-input" placeholder="https://..." value="${producto.link || ''}" readonly>
+                    <button class="open-link-btn">🔗 Abrir</button>
+                </td>
+                <td class="currency-cell">
+                    <span class="currency-symbol">$</span>
+                    <input type="number" class="usd-input" step="0.01" placeholder="0.00" value="${producto.precio_usd || ''}" readonly>
+                </td>
+                <td class="currency-cell">
+                    <span class="currency-symbol">$</span>
+                    <input type="number" class="ars-input" step="0.01" placeholder="0.00" value="${producto.precio_ars || ''}" readonly>
+                </td>
+                <td class="currency-cell">
+                    <span class="currency-symbol">$</span>
+                    <input type="number" class="clp-input" step="0.01" placeholder="0.00" value="${producto.precio_clp || ''}" readonly>
+                </td>
+                <td>
+                    <button class="edit-btn" onclick="editRow(this)">📝 Editar</button>
+                    <button class="save-row-btn" onclick="saveRow(this)" style="display:none;">💾 Guardar</button>
+                    <button class="delete-btn" onclick="deleteRow(this)">🗑️ Eliminar</button>
+                </td>
+            `;
+            
+            if (producto.id) {
+                newRow.setAttribute('data-id', producto.id);
+            }
+            
+            tableBody.appendChild(newRow);
+            attachEventListeners(newRow);
+            
+            if (isNew) {
+                editRow(newRow.querySelector('.edit-btn'));
+            }
+            
+            return newRow;
+        }
+
+        function addRow() {
+            createNewRow({}, true);
+        }
+
+        function editRow(button) {
+            const row = button.closest('tr');
+            row.classList.add('editing-row');
+            
+            row.querySelectorAll('input, select').forEach(el => {
+                el.readOnly = false;
+                el.disabled = false;
+            });
+
+            attachEventListeners(row);
+
+            row.querySelector('.edit-btn').style.display = 'none';
+            row.querySelector('.save-row-btn').style.display = 'inline-block';
+            row.querySelector('input[type="text"]').focus();
+        }
+
+        async function saveRow(button) {
+            const row = button.closest('tr');
+            const rowData = getRowData(row);
+            
+            if (!rowData.nombre || rowData.nombre.trim() === '') {
+                showMessage('El nombre del producto no puede estar vacío.', 'error');
+                row.querySelector('input[type="text"]').focus();
+                return;
+            }
+
+            const spinnerEl = document.getElementById('loadingSpinner');
+            spinnerEl.classList.add('show');
+            
+            try {
+                const productId = row.getAttribute('data-id');
+                let response;
+                
+                if (productId) {
+                    response = await fetch(`${API_BASE_URL}/productos/${productId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(rowData)
+                    });
+                } else {
+                    response = await fetch(`${API_BASE_URL}/productos`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(rowData)
+                    });
+                }
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Error al guardar el producto.');
+                }
+                
+                const savedProduct = await response.json();
+                row.setAttribute('data-id', savedProduct.id);
+                
+                row.classList.remove('editing-row');
+                row.querySelectorAll('input, select').forEach(el => {
+                    if (el.tagName === 'SELECT') el.disabled = true;
+                    else el.readOnly = true;
+                });
+                
+                row.querySelector('.edit-btn').style.display = 'inline-block';
+                row.querySelector('.save-row-btn').style.display = 'none';
+
+                showMessage('Producto guardado exitosamente.', 'success');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage(error.message, 'error');
+            } finally {
+                spinnerEl.classList.remove('show');
+            }
+        }
+        
         function attachEventListeners(row) {
             row.querySelectorAll('.usd-input, .ars-input, .clp-input').forEach(input => {
                 input.addEventListener('input', function() { updateCurrencies(this); });
@@ -818,8 +757,7 @@
             const openLinkBtn = row.querySelector('.open-link-btn');
 
             const updateButtonState = () => {
-                // El botón solo está habilitado si la fila está en edición Y hay un link
-                openLinkBtn.disabled = !linkInput.value.trim() || !row.classList.contains('editing-row');
+                openLinkBtn.disabled = !linkInput.value.trim();
             };
 
             linkInput.addEventListener('input', updateButtonState);
@@ -831,6 +769,7 @@
                     window.open(fullUrl, '_blank');
                 }
             });
+
             updateButtonState();
         }
 
@@ -851,13 +790,11 @@
             if (!confirm('Esto intentará guardar TODAS las filas en modo de edición. ¿Desea continuar?')) {
                 return;
             }
-
             const editingRows = document.querySelectorAll('#tableBody tr.editing-row');
             if (editingRows.length === 0) {
                 showMessage('No hay filas en modo de edición para guardar.', 'info');
                 return;
             }
-
             for (let row of editingRows) {
                 await saveRow(row.querySelector('.save-row-btn'));
             }
@@ -868,18 +805,15 @@
             try {
                 spinnerEl.classList.add('show');
                 showMessage('Cargando productos...', 'info');
-                
                 const response = await fetch(`${API_BASE_URL}/productos`);
                 if (!response.ok) throw new Error('Error al cargar productos');
-                
                 productos = await response.json();
                 document.getElementById('tableBody').innerHTML = '';
-                
                 if (productos.length > 0) {
                     productos.forEach(producto => createNewRow(producto));
                     showMessage(`${productos.length} productos cargados.`, 'success');
                 } else {
-                    addRow(); // Crea una fila nueva en edición si no hay datos
+                    addRow();
                     showMessage('No hay productos guardados. Se creó una fila nueva.', 'info');
                 }
             } catch (error) {
@@ -888,6 +822,22 @@
                 addRow();
             } finally {
                 spinnerEl.classList.remove('show');
+            }
+        }
+
+        function deleteRow(button) {
+            const row = button.closest('tr');
+            const productId = row.getAttribute('data-id');
+            const productName = row.querySelector('input[type="text"]').value || "este producto";
+            const message = productId 
+                ? `¿Estás seguro de que quieres eliminar "${productName}" de la base de datos?`
+                : `¿Estás seguro de que quieres descartar esta fila?`;
+            if (confirm(message)) {
+                if (productId) {
+                    deleteProductFromDB(productId, row);
+                } else {
+                    row.remove();
+                }
             }
         }
         
@@ -908,9 +858,7 @@
         }
 
         function exportToCSV() {
-            const rows = document.querySelectorAll('#productTable tr');
             let csv = [['Producto', 'Estado', 'Link', 'Precio USD', 'Precio ARS', 'Precio CLP'].join(',')];
-            
             document.querySelectorAll('#tableBody tr').forEach(row => {
                 const data = getRowData(row);
                 if (data.nombre) {
@@ -925,7 +873,6 @@
                     csv.push(csvRow);
                 }
             });
-
             const csvContent = csv.join('\n');
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
@@ -947,39 +894,33 @@
         function sortTable(column) {
             const tableBody = document.getElementById('tableBody');
             const rows = Array.from(tableBody.querySelectorAll('tr'));
-            
             if (sortColumn === column) {
                 sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
             } else {
                 sortColumn = column;
                 sortDirection = 'asc';
             }
-
             document.querySelectorAll('th[data-column]').forEach(header => {
                 header.classList.remove('asc', 'desc');
                 if (header.getAttribute('data-column') === sortColumn) {
                     header.classList.add(sortDirection);
                 }
             });
-
             rows.sort((a, b) => {
                 const rowAData = getRowData(a);
                 const rowBData = getRowData(b);
                 let aValue = rowAData[column] || (column === 'nombre' ? '' : 0);
                 let bValue = rowBData[column] || (column === 'nombre' ? '' : 0);
-                
                 if (typeof aValue === 'string') {
                     aValue = aValue.toLowerCase();
                     bValue = bValue.toLowerCase();
                 }
-
                 if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
                 if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
                 return 0;
             });
             rows.forEach(row => tableBody.appendChild(row));
         }
-
     </script>
 </body>
 </html>
