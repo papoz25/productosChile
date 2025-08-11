@@ -209,7 +209,7 @@
         
         th {
             background-color: #4caf50;
-            color: white;
+            color: black;
             padding: 12px;
             text-align: left;
             font-weight: bold;
@@ -468,11 +468,38 @@
 
         /* Estilos para las nuevas columnas */
         .precio-mayorista {
-            background-color: #e8f5e8;
+            background-color: #e8f5e8 !important;
         }
 
         .precio-minorista {
-            background-color: #fff3cd;
+            background-color: #fff3cd !important;
+        }
+
+        /* Asegurar que los colores se mantengan incluso en hover */
+        tr:hover .precio-mayorista {
+            background-color: #d4f4d4 !important;
+        }
+
+        tr:hover .precio-minorista {
+            background-color: #ffeaa7 !important;
+        }
+
+        /* Para filas pares */
+        tr:nth-child(even) .precio-mayorista {
+            background-color: #d4f4d4 !important;
+        }
+
+        tr:nth-child(even) .precio-minorista {
+            background-color: #ffeaa7 !important;
+        }
+
+        /* Para filas en edición */
+        tr.editing-row .precio-mayorista {
+            background-color: #c8e6c9 !important;
+        }
+
+        tr.editing-row .precio-minorista {
+            background-color: #ffe082 !important;
         }
     </style>
 </head>
@@ -516,8 +543,8 @@
                         <th data-column="precio_usd">Precio USD ($) <span class="sort-icon"></span></th>
                         <th data-column="precio_ars">Precio ARS ($) <span class="sort-icon"></span></th>
                         <th data-column="precio_clp">Precio CLP ($) <span class="sort-icon"></span></th>
-                        <th data-column="precio_mayorista" class="precio-mayorista">Precio Mayorista ARS ($) <span class="sort-icon"></span></th>
-                        <th data-column="precio_minorista" class="precio-minorista">Precio Minorista ARS ($) <span class="sort-icon"></span></th>
+                        <th data-column="precio_mayorista" class="precio-mayorista" style="background-color: #4caf50; color: black;">💼 Precio Mayorista ARS ($) <span class="sort-icon"></span></th>
+                        <th data-column="precio_minorista" class="precio-minorista" style="background-color: #ff9800; color: black;">🏪 Precio Minorista ARS ($) <span class="sort-icon"></span></th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
