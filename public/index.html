@@ -13,7 +13,7 @@
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             background-color: white;
             padding: 15px;
@@ -64,7 +64,7 @@
             }
             
             table {
-                min-width: 800px;
+                min-width: 1000px;
                 font-size: 14px;
             }
             
@@ -173,6 +173,8 @@
             border: 1px solid #ddd;
             border-radius: 3px;
             text-align: right;
+            background-color: #fff3cd;
+            font-weight: bold;
         }
         
         /* Controles de búsqueda y ordenación */
@@ -211,7 +213,7 @@
             padding: 12px;
             text-align: left;
             font-weight: bold;
-            cursor: pointer; /* Cursor de puntero para indicar que se puede hacer clic */
+            cursor: pointer;
             position: relative;
         }
 
@@ -235,7 +237,7 @@
         td {
             padding: 10px;
             border-bottom: 1px solid #ddd;
-            vertical-align: middle; /* Alinea verticalmente el contenido de las celdas */
+            vertical-align: middle;
         }
         
         tr:nth-child(even) {
@@ -418,38 +420,9 @@
             color: #0c5460;
             border: 1px solid #bee5eb;
         }
-        
-        /* Celda del link */
-        .link-cell {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .link-cell input {
-            flex-grow: 1;
-        }
-        .open-link-btn {
-            background-color: #17a2b8;
-            color: white;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            flex-shrink: 0;
-            white-space: nowrap;
-        }
-        .open-link-btn:hover {
-            background-color: #138496;
-        }
-        .open-link-btn:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
 
         /* --- NUEVOS ESTILOS PARA EDICIÓN DE FILA --- */
-        .edit-btn, .save-row-btn {
+        .edit-btn, .save-row-btn, .cancel-btn {
             background-color: #17a2b8;
             color: white;
             border: none;
@@ -457,24 +430,32 @@
             border-radius: 3px;
             cursor: pointer;
             font-size: 12px;
-            margin-right: 5px; /* Espacio entre botones */
+            margin-right: 5px;
         }
 
-        .edit-btn:hover, .save-row-btn:hover {
+        .edit-btn:hover, .save-row-btn:hover, .cancel-btn:hover {
             background-color: #138496;
         }
 
         .save-row-btn {
-            background-color: #28a745; /* Verde para guardar */
+            background-color: #28a745;
         }
 
         .save-row-btn:hover {
             background-color: #218838;
         }
 
+        .cancel-btn {
+            background-color: #6c757d;
+        }
+
+        .cancel-btn:hover {
+            background-color: #545b62;
+        }
+
         /* Estilo para resaltar la fila en modo de edición */
         tr.editing-row {
-            background-color: #fffbe6 !important; /* Un amarillo claro para destacar */
+            background-color: #fffbe6 !important;
         }
 
         /* Hacer que los inputs se vean bloqueados cuando están en readonly */
@@ -483,6 +464,15 @@
             cursor: not-allowed;
             border-color: #e9ecef;
             color: #6c757d;
+        }
+
+        /* Estilos para las nuevas columnas */
+        .precio-mayorista {
+            background-color: #e8f5e8;
+        }
+
+        .precio-minorista {
+            background-color: #fff3cd;
         }
     </style>
 </head>
@@ -506,6 +496,9 @@
                     <span>CLP</span>
                 </div>
             </div>
+            <p style="margin-top: 10px; color: #666; font-size: 14px;">
+                💡 Al cambiar estos valores, todos los precios de la tabla se actualizarán automáticamente
+            </p>
         </div>
 
         <div class="controls">
@@ -520,10 +513,11 @@
                     <tr>
                         <th data-column="nombre">Producto <span class="sort-icon"></span></th>
                         <th>Estado</th>
-                        <th>Link</th>
                         <th data-column="precio_usd">Precio USD ($) <span class="sort-icon"></span></th>
                         <th data-column="precio_ars">Precio ARS ($) <span class="sort-icon"></span></th>
                         <th data-column="precio_clp">Precio CLP ($) <span class="sort-icon"></span></th>
+                        <th data-column="precio_mayorista" class="precio-mayorista">Precio Mayorista ARS ($) <span class="sort-icon"></span></th>
+                        <th data-column="precio_minorista" class="precio-minorista">Precio Minorista ARS ($) <span class="sort-icon"></span></th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -563,6 +557,10 @@
                     sortTable(header.getAttribute('data-column'));
                 });
             });
+
+            // Agregar listeners para actualizar todos los precios cuando cambien las tasas
+            document.getElementById('usd-to-ars').addEventListener('input', updateAllPrices);
+            document.getElementById('usd-to-clp').addEventListener('input', updateAllPrices);
         });
 
         function showMessage(message, type = 'info') {
@@ -576,9 +574,22 @@
 
         function getRates() {
             return {
-                usdToArs: parseFloat(document.getElementById('usd-to-ars').value) || 1330.92,
+                usdToArs: parseFloat(document.getElementById('usd-to-ars').value) || 1330,
                 usdToClp: parseFloat(document.getElementById('usd-to-clp').value) || 955
             };
+        }
+
+        function updateAllPrices() {
+            if (isUpdating) return;
+            
+            document.querySelectorAll('#tableBody tr').forEach(row => {
+                const usdInput = row.querySelector('.usd-input');
+                if (usdInput && usdInput.value && !isNaN(parseFloat(usdInput.value))) {
+                    updateCurrencies(usdInput);
+                }
+            });
+            
+            showMessage('Todos los precios actualizados con las nuevas tasas de cambio', 'success');
         }
 
         function updateCurrencies(changedInput) {
@@ -586,11 +597,6 @@
             isUpdating = true;
             
             const row = changedInput.closest('tr');
-            if (!row.classList.contains('editing-row')) {
-                isUpdating = false;
-                return;
-            }
-
             const usdInput = row.querySelector('.usd-input');
             const arsInput = row.querySelector('.ars-input');
             const clpInput = row.querySelector('.clp-input');
@@ -633,10 +639,6 @@
                         <option value="usado" ${producto.estado === 'usado' ? 'selected' : ''}>Usado</option>
                     </select>
                 </td>
-                <td class="link-cell">
-                    <input type="text" class="link-input" placeholder="https://..." value="${producto.link || ''}" readonly>
-                    <button class="open-link-btn">🔗 Abrir</button>
-                </td>
                 <td class="currency-cell">
                     <span class="currency-symbol">$</span>
                     <input type="number" class="usd-input" step="0.01" placeholder="0.00" value="${producto.precio_usd || ''}" readonly>
@@ -649,9 +651,18 @@
                     <span class="currency-symbol">$</span>
                     <input type="number" class="clp-input" step="0.01" placeholder="0.00" value="${producto.precio_clp || ''}" readonly>
                 </td>
+                <td class="currency-cell precio-mayorista">
+                    <span class="currency-symbol">$</span>
+                    <input type="number" class="mayorista-input" step="0.01" placeholder="0.00" value="${producto.precio_mayorista || ''}" readonly>
+                </td>
+                <td class="currency-cell precio-minorista">
+                    <span class="currency-symbol">$</span>
+                    <input type="number" class="minorista-input" step="0.01" placeholder="0.00" value="${producto.precio_minorista || ''}" readonly>
+                </td>
                 <td>
                     <button class="edit-btn" onclick="editRow(this)">📝 Editar</button>
                     <button class="save-row-btn" onclick="saveRow(this)" style="display:none;">💾 Guardar</button>
+                    <button class="cancel-btn" onclick="cancelEdit(this)" style="display:none;">❌ Cancelar</button>
                     <button class="delete-btn" onclick="deleteRow(this)">🗑️ Eliminar</button>
                 </td>
             `;
@@ -676,6 +687,10 @@
 
         function editRow(button) {
             const row = button.closest('tr');
+            
+            // Guardar los valores originales para poder cancelar
+            row.setAttribute('data-original', JSON.stringify(getRowData(row)));
+            
             row.classList.add('editing-row');
             
             row.querySelectorAll('input, select').forEach(el => {
@@ -687,7 +702,40 @@
 
             row.querySelector('.edit-btn').style.display = 'none';
             row.querySelector('.save-row-btn').style.display = 'inline-block';
+            row.querySelector('.cancel-btn').style.display = 'inline-block';
             row.querySelector('input[type="text"]').focus();
+        }
+
+        function cancelEdit(button) {
+            const row = button.closest('tr');
+            const originalData = JSON.parse(row.getAttribute('data-original') || '{}');
+            
+            // Restaurar valores originales
+            const inputs = row.querySelectorAll('input, select');
+            inputs[0].value = originalData.nombre || '';
+            inputs[1].value = originalData.estado || '';
+            inputs[2].value = originalData.precio_usd || '';
+            inputs[3].value = originalData.precio_ars || '';
+            inputs[4].value = originalData.precio_clp || '';
+            inputs[5].value = originalData.precio_mayorista || '';
+            inputs[6].value = originalData.precio_minorista || '';
+            
+            // Si es una fila nueva (sin ID), eliminarla
+            if (!row.getAttribute('data-id')) {
+                row.remove();
+                return;
+            }
+            
+            // Deshabilitar edición
+            row.classList.remove('editing-row');
+            row.querySelectorAll('input, select').forEach(el => {
+                if (el.tagName === 'SELECT') el.disabled = true;
+                else el.readOnly = true;
+            });
+            
+            row.querySelector('.edit-btn').style.display = 'inline-block';
+            row.querySelector('.save-row-btn').style.display = 'none';
+            row.querySelector('.cancel-btn').style.display = 'none';
         }
 
         async function saveRow(button) {
@@ -723,7 +771,7 @@
                 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.message || 'Error al guardar el producto.');
+                    throw new Error(errorData.error || 'Error al guardar el producto.');
                 }
                 
                 const savedProduct = await response.json();
@@ -737,6 +785,7 @@
                 
                 row.querySelector('.edit-btn').style.display = 'inline-block';
                 row.querySelector('.save-row-btn').style.display = 'none';
+                row.querySelector('.cancel-btn').style.display = 'none';
 
                 showMessage('Producto guardado exitosamente.', 'success');
                 
@@ -752,25 +801,6 @@
             row.querySelectorAll('.usd-input, .ars-input, .clp-input').forEach(input => {
                 input.addEventListener('input', function() { updateCurrencies(this); });
             });
-
-            const linkInput = row.querySelector('.link-input');
-            const openLinkBtn = row.querySelector('.open-link-btn');
-
-            const updateButtonState = () => {
-                openLinkBtn.disabled = !linkInput.value.trim();
-            };
-
-            linkInput.addEventListener('input', updateButtonState);
-            
-            openLinkBtn.addEventListener('click', () => {
-                const url = linkInput.value.trim();
-                if (url) {
-                    let fullUrl = url.startsWith('http') ? url : 'https://' + url;
-                    window.open(fullUrl, '_blank');
-                }
-            });
-
-            updateButtonState();
         }
 
         function getRowData(row) {
@@ -778,10 +808,11 @@
             return {
                 nombre: inputs[0].value || null,
                 estado: inputs[1].value || null,
-                link: inputs[2].value || null,
-                precio_usd: parseFloat(inputs[4].value) || null,
-                precio_ars: parseFloat(inputs[5].value) || null,
-                precio_clp: parseFloat(inputs[6].value) || null,
+                precio_usd: parseFloat(inputs[2].value) || null,
+                precio_ars: parseFloat(inputs[3].value) || null,
+                precio_clp: parseFloat(inputs[4].value) || null,
+                precio_mayorista: parseFloat(inputs[5].value) || null,
+                precio_minorista: parseFloat(inputs[6].value) || null,
                 id: row.getAttribute('data-id') || null
             };
         }
@@ -858,17 +889,18 @@
         }
 
         function exportToCSV() {
-            let csv = [['Producto', 'Estado', 'Link', 'Precio USD', 'Precio ARS', 'Precio CLP'].join(',')];
+            let csv = [['Producto', 'Estado', 'Precio USD', 'Precio ARS', 'Precio CLP', 'Precio Mayorista ARS', 'Precio Minorista ARS'].join(',')];
             document.querySelectorAll('#tableBody tr').forEach(row => {
                 const data = getRowData(row);
                 if (data.nombre) {
                     const csvRow = [
                         `"${(data.nombre || '').replace(/"/g, '""')}"`,
                         `"${(data.estado || '').replace(/"/g, '""')}"`,
-                        `"${(data.link || '').replace(/"/g, '""')}"`,
                         data.precio_usd || 0,
                         data.precio_ars || 0,
-                        data.precio_clp || 0
+                        data.precio_clp || 0,
+                        data.precio_mayorista || 0,
+                        data.precio_minorista || 0
                     ].join(',');
                     csv.push(csvRow);
                 }
