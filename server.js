@@ -16,7 +16,7 @@ const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
   console.error('❌ FATAL ERROR: La variable de entorno DATABASE_URL no está definida.');
-  process.exit(1); // Detiene la aplicación si la URL no existe
+  process.exit(1);
 }
 
 const pool = new Pool({
@@ -35,20 +35,39 @@ pool.on('error', (err) => {
   console.error('❌ Error inesperado en PostgreSQL:', err);
 });
 
-// Crear tabla si no existe (versión simplificada)
+// Crear tabla si no existe con las nuevas columnas
 async function initDB() {
   const createTableQuery = `
     CREATE TABLE IF NOT EXISTS productos (
       id SERIAL PRIMARY KEY,
       nombre VARCHAR(255) NOT NULL,
       estado VARCHAR(50) CHECK (estado IN ('nuevo', 'usado')),
-      link TEXT,
       precio_usd DECIMAL(10,2),
       precio_ars DECIMAL(15,2),
       precio_clp DECIMAL(15,2),
+      precio_mayorista DECIMAL(15,2),
+      precio_minorista DECIMAL(15,2),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
+  `;
+  
+  // Agregar las nuevas columnas si no existen
+  const addColumnsQuery = `
+    DO $$ 
+    BEGIN
+      BEGIN
+        ALTER TABLE productos ADD COLUMN precio_mayorista DECIMAL(15,2);
+      EXCEPTION
+        WHEN duplicate_column THEN NULL;
+      END;
+      
+      BEGIN
+        ALTER TABLE productos ADD COLUMN precio_minorista DECIMAL(15,2);
+      EXCEPTION
+        WHEN duplicate_column THEN NULL;
+      END;
+    END $$;
   `;
   
   try {
@@ -56,13 +75,16 @@ async function initDB() {
     await pool.query(createTableQuery);
     console.log('✅ Tabla "productos" creada o ya existente.');
     
-    // Verificamos que la tabla existe contando las filas
+    // Agregar nuevas columnas si no existen
+    await pool.query(addColumnsQuery);
+    console.log('✅ Columnas actualizadas.');
+    
     const result = await pool.query("SELECT COUNT(*) FROM productos");
     console.log(`📊 Productos existentes: ${result.rows[0].count}`);
     
   } catch (error) {
     console.error('❌ Error al inicializar la base de datos:', error);
-    throw error; // Detener el servidor si la inicialización falla
+    throw error;
   }
 }
 
@@ -107,7 +129,7 @@ app.get('/api/productos', async (req, res) => {
 // Crear nuevo producto
 app.post('/api/productos', async (req, res) => {
   try {
-    const { nombre, estado, link, precio_usd, precio_ars, precio_clp } = req.body;
+    const { nombre, estado, precio_usd, precio_ars, precio_clp, precio_mayorista, precio_minorista } = req.body;
     
     console.log('📝 Creando producto:', { nombre, estado });
     
@@ -116,9 +138,9 @@ app.post('/api/productos', async (req, res) => {
     }
     
     const result = await pool.query(
-      `INSERT INTO productos (nombre, estado, link, precio_usd, precio_ars, precio_clp) 
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [nombre.trim(), estado, link, precio_usd, precio_ars, precio_clp]
+      `INSERT INTO productos (nombre, estado, precio_usd, precio_ars, precio_clp, precio_mayorista, precio_minorista) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [nombre.trim(), estado, precio_usd, precio_ars, precio_clp, precio_mayorista, precio_minorista]
     );
     
     console.log('✅ Producto creado con ID:', result.rows[0].id);
@@ -136,7 +158,7 @@ app.post('/api/productos', async (req, res) => {
 app.put('/api/productos/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { nombre, estado, link, precio_usd, precio_ars, precio_clp } = req.body;
+    const { nombre, estado, precio_usd, precio_ars, precio_clp, precio_mayorista, precio_minorista } = req.body;
     
     console.log('✏️ Actualizando producto ID:', id);
     
@@ -146,10 +168,11 @@ app.put('/api/productos/:id', async (req, res) => {
     
     const result = await pool.query(
       `UPDATE productos 
-       SET nombre = $1, estado = $2, link = $3, precio_usd = $4, 
-           precio_ars = $5, precio_clp = $6, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $7 RETURNING *`,
-      [nombre.trim(), estado, link, precio_usd, precio_ars, precio_clp, id]
+       SET nombre = $1, estado = $2, precio_usd = $3, 
+           precio_ars = $4, precio_clp = $5, precio_mayorista = $6, 
+           precio_minorista = $7, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $8 RETURNING *`,
+      [nombre.trim(), estado, precio_usd, precio_ars, precio_clp, precio_mayorista, precio_minorista, id]
     );
     
     if (result.rows.length === 0) {
